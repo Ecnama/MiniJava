@@ -20,13 +20,25 @@ let binop out = function
   | OpSub ->
      fprintf out "-"
   | OpMul ->
-     fprintf out "*"
+     fprintf out "*"  
+  | OpDiv ->
+     fprintf out "/"
   | OpLt  ->
      fprintf out "<"
   | OpGt  ->
      fprintf out ">"
   | OpAnd ->
      fprintf out "&&"
+  | OpOr  ->
+     fprintf out "||"
+  | OpEq  ->
+     fprintf out "=="
+  | OpBWAnd ->
+     fprintf out "&"
+  | OpBWOr  ->
+     fprintf out "|"
+  | OpBWXOr  ->
+     fprintf out "^"
 
 (** [expr out e], [expr0 out e], ..., [expr6 out e] print the expression [e]
     on the output channel [out]. [expr] is a synonym for [expr6].
@@ -78,7 +90,7 @@ and expr2 out e = match e.raw_expression with
      expr1 out e
 
 and expr3 out e = match e.raw_expression with 
-  | EBinOp (OpMul as op, e1, e2) ->
+  | EBinOp ((OpMul | OpDiv) as op, e1, e2) ->
      fprintf out "%a %a %a"
        expr3 e1
        binop op
@@ -87,7 +99,7 @@ and expr3 out e = match e.raw_expression with
      expr2 out e
 
 and expr4 out e = match e.raw_expression with
-  | EBinOp (OpSub as op, e1, e2) ->
+  | EBinOp ((OpSub | OpAdd) as op, e1, e2) ->
      fprintf out "%a %a %a"
        expr4 e1
        binop op
@@ -96,16 +108,16 @@ and expr4 out e = match e.raw_expression with
      expr3 out e
 
 and expr5 out e = match e.raw_expression with
-  | EBinOp (OpAdd as op, e1, e2) ->
+  | EBinOp ((OpLt | OpGt) as op, e1, e2) ->
      fprintf out "%a %a %a"
-       expr5 e1
+       expr6 e1
        binop op
-       expr5 e2
+       expr6 e2
   | _ ->
      expr4 out e
 
 and expr6 out e = match e.raw_expression with
-  | EBinOp ((OpLt | OpGt | OpAnd) as op, e1, e2) ->
+  | EBinOp (OpEq as op, e1, e2) ->
      fprintf out "%a %a %a"
        expr6 e1
        binop op
@@ -113,8 +125,53 @@ and expr6 out e = match e.raw_expression with
   | _ ->
      expr5 out e
 
+and expr7 out e = match e.raw_expression with
+  | EBinOp (OpBWAnd as op, e1, e2) ->
+     fprintf out "%a %a %a"
+       expr5 e1
+       binop op
+       expr5 e2
+  | _ ->
+     expr6 out e
+
+and expr8 out e = match e.raw_expression with
+  | EBinOp (OpBWXOr as op, e1, e2) ->
+     fprintf out "%a %a %a"
+       expr5 e1
+       binop op
+       expr5 e2
+  | _ ->
+     expr7 out e
+
+and expr9 out e = match e.raw_expression with
+  | EBinOp (OpBWOr as op, e1, e2) ->
+     fprintf out "%a %a %a"
+       expr5 e1
+       binop op
+       expr5 e2
+  | _ ->
+     expr8 out e
+
+and expr10 out e = match e.raw_expression with
+  | EBinOp (OpAnd as op, e1, e2) ->
+     fprintf out "%a %a %a"
+       expr6 e1
+       binop op
+       expr6 e2
+  | _ ->
+     expr9 out e
+
+and expr11 out e = match e.raw_expression with
+  | EBinOp (OpOr as op, e1, e2) ->
+     fprintf out "%a %a %a"
+       expr6 e1
+       binop op
+       expr6 e2
+  | _ ->
+     expr10 out e
+
 and expr out e = 
-   expr6 out e
+   expr11 out e
 
 (** [binop out ins] prints the instruction [ins] on the output channel [out]. *)
 let rec instr out = function

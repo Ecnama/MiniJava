@@ -8,7 +8,7 @@
 %token INTEGER BOOLEAN
 %token <string Location.t> IDENT
 %token CLASS PUBLIC STATIC VOID MAIN STRING EXTENDS RETURN
-%token PLUS MINUS TIMES NOT LT GT AND
+%token PLUS MINUS TIMES DIV BWAND BWOR BWXOR NOT EQ LT GT AND OR
 %token COMMA SEMICOLON
 %token ASSIGN
 %token LPAREN RPAREN LBRACKET RBRACKET LBRACE RBRACE
@@ -17,10 +17,15 @@
 %token IF ELSE WHILE
 %token EOF
 
+%left OR
 %left AND
+%left BWOR
+%left BWXOR
+%left BWAND
+%left EQ
 %nonassoc LT GT
 %left PLUS MINUS
-%left TIMES
+%left TIMES DIV
 %nonassoc NOT
 %nonassoc DOT LBRACKET
 
@@ -142,12 +147,18 @@ raw_expression:
    { EUnOp (UOpNot, e) }
 
 %inline binop:
-| PLUS  { OpAdd }
-| MINUS { OpSub }
-| TIMES { OpMul }
-| LT    { OpLt }
-| GT    { OpGt }
-| AND   { OpAnd }
+| PLUS   { OpAdd }
+| MINUS  { OpSub }
+| TIMES  { OpMul }
+| DIV    { OpDiv }
+| LT     { OpLt }
+| GT     { OpGt }
+| AND    { OpAnd }
+| OR     { OpOr }
+| EQ     { OpEq }
+| BWAND  { OpBWAnd }
+| BWOR   { OpBWOr }
+| BWXOR  { OpBWXOr }
 
 instruction:
 | b = block
@@ -162,8 +173,11 @@ instruction:
 | SYSO LPAREN e = expression RPAREN SEMICOLON
    { ISyso e }
 
-| IF LPAREN c = expression RPAREN i1 = instruction ELSE i2 = instruction
+| IF LPAREN c = expression RPAREN i1 = block ELSE i2 = block
    { IIf (c, i1, i2) }
+
+| IF LPAREN c = expression RPAREN i = block
+   { IIf (c, i, IBlock [])}
 
 | WHILE LPAREN c = expression RPAREN i = instruction
    { IWhile (c, i) }

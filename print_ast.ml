@@ -77,12 +77,24 @@ let print_binop out = function
      fprintf out "OpSub"
   | OpMul ->
      fprintf out "OpMul"
+  | OpDiv ->
+     fprintf out "OpDiv"
   | OpLt  ->
      fprintf out "OpLt"
   | OpGt  ->
      fprintf out "OpGt"
   | OpAnd ->
      fprintf out "OpAnd"
+  | OpOr  ->
+     fprintf out "OpOr"
+  | OpEq  ->
+     fprintf out "OpEq"
+  | OpBWAnd ->
+     fprintf out "OpBWAnd"
+  | OpBWOr  ->
+     fprintf out "OpBWOr"
+  | OpBWXOr  ->
+     fprintf out "OpBWXor"
 
 (** [print_expression prefix out e] prints the expression [e] on the output channel [out].
     [prefix] is the string already printed just before [e]. *)

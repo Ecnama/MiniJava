@@ -27,12 +27,18 @@ and constant =
   | ConstInt of int32 (** Integer constant [[-2^31, 2^31 - 1]]. *)
 
 and binop =
-  | OpAdd (** Binary operator [+]. *)
-  | OpSub (** Binary operator [-]. *)
-  | OpMul (** Binary operator [*]. *)
-  | OpLt  (** Binary operator [<]. *)
-  | OpGt  (** Binary operator [>]. *)
-  | OpAnd (** Binary operator [&&]. *)
+  | OpAdd   (** Binary operator [+]. *)
+  | OpSub   (** Binary operator [-]. *)
+  | OpMul   (** Binary operator [*]. *)
+  | OpDiv   (** Binary operator [/]. *)
+  | OpLt    (** Binary operator [<]. *)
+  | OpGt    (** Binary operator [>]. *)
+  | OpBWAnd (** Binary operator [&]. *)
+  | OpBWOr  (** Binary operator [|]. *)
+  | OpBWXOr (** Binary operator [^]. *)
+  | OpAnd   (** Binary operator [&&]. *)
+  | OpOr    (** Binary operator [||]. *)
+  | OpEq    (** Binary operator [==]. *)
 
 and unop = UOpNot (** Unary operator [!]. *)
 

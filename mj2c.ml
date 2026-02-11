@@ -296,12 +296,18 @@ let binop2c
       (op : TMJ.binop)
     : unit =
   match op with
-  | OpAdd -> fprintf out "+"
-  | OpSub -> fprintf out "-"
-  | OpMul -> fprintf out "*"
-  | OpLt  -> fprintf out "<"
-  | OpGt  -> fprintf out ">"
-  | OpAnd -> fprintf out "&&"
+  | OpAdd   -> fprintf out "+"
+  | OpSub   -> fprintf out "-"
+  | OpMul   -> fprintf out "*"
+  | OpDiv   -> fprintf out "/"
+  | OpLt    -> fprintf out "<"
+  | OpGt    -> fprintf out ">"
+  | OpEq   -> fprintf out "=="
+  | OpAnd   -> fprintf out "&&"
+  | OpOr   -> fprintf out "||"
+  | OpBWAnd -> fprintf out "&"
+  | OpBWXOr  -> fprintf out "^"
+  | OpBWOr  -> fprintf out "|"
 
 (** [type2c out typ] transpiles the type [typ] to C on the output channel [out]. *)
 let type2c

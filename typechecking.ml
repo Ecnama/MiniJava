@@ -169,11 +169,17 @@ and typecheck_expression (cenv : class_env) (venv : variable_env) (vinit : S.t)
   | EBinOp (op, e1, e2) ->
       let expected, returned =
         match op with
+        | OpBWAnd
+        | OpBWOr
+        | OpBWXOr
         | OpAdd
         | OpSub
-        | OpMul -> TypInt, TypInt
-        | OpLt  -> TypInt, TypBool
+        | OpMul
+        | OpDiv -> TypInt, TypInt
+        | OpEq
+        | OpLt
         | OpGt  -> TypInt, TypBool
+        | OpOr
         | OpAnd -> TypBool, TypBool
       in
       let e1' = typecheck_expression_expecting cenv venv vinit instanceof expected e1 in

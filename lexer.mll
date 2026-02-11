@@ -28,7 +28,13 @@ rule get_token = parse
   | '+'       { PLUS }
   | '-'       { MINUS }
   | '*'       { TIMES }
+  | '/'       { DIV }
+  | "&"       { BWAND }
+  | "|"       { BWOR }
+  | "^"       { BWXOR }
+  | "=="      { EQ }
   | "&&"      { AND }
+  | "||"      { OR }
   | "<"       { LT }
   | ">"       { GT }
   | '('       { LPAREN }
