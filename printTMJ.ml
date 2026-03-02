@@ -13,6 +13,13 @@ let constant out = function
   | ConstInt i ->
      fprintf out "%ld" i
 
+(** [unop out op] prints the unary operator [op] on the output channel [out]. *)
+let unop out = function
+  | UOpNot ->
+     fprintf out "!"
+  | UOpSub ->
+     fprintf out "-"
+
 (** [binop out op] prints the binary operator [op] on the output channel [out]. *)
 let binop out = function
   | OpAdd ->
@@ -23,6 +30,8 @@ let binop out = function
      fprintf out "*"  
   | OpDiv ->
      fprintf out "/"
+  | OpRem ->
+     fprintf out "%%"
   | OpLt  ->
      fprintf out "<"
   | OpGt  ->
@@ -39,6 +48,11 @@ let binop out = function
      fprintf out "|"
   | OpBWXOr  ->
      fprintf out "^"
+
+(** [funop out op] prints the function operator [op] on the output channel [out]. *)
+let funop out = function
+  | OpMod ->
+     fprintf out "%%%%"
 
 (** [expr out e], [expr0 out e], ..., [expr6 out e] print the expression [e]
     on the output channel [out]. [expr] is a synonym for [expr6].
@@ -83,17 +97,23 @@ and expr1 out e = match e.raw_expression with
      expr0 out e
 
 and expr2 out e = match e.raw_expression with
-  | EUnOp (UOpNot, e) ->
-     fprintf out "!%a"
+  | EUnOp (UOpNot as op, e) ->
+     fprintf out "%a%a"
+       unop op
        expr2 e
   | _ ->
      expr1 out e
 
 and expr3 out e = match e.raw_expression with 
-  | EBinOp ((OpMul | OpDiv) as op, e1, e2) ->
+  | EBinOp ((OpMul | OpDiv | OpRem) as op, e1, e2) ->
      fprintf out "%a %a %a"
        expr3 e1
        binop op
+       expr3 e2
+  | EFunOp ((OpMod) as op, e1, e2) ->
+     fprintf out "%a %a %a"
+       expr3 e1
+       funop op
        expr3 e2
   | _ ->
      expr2 out e
@@ -104,6 +124,10 @@ and expr4 out e = match e.raw_expression with
        expr4 e1
        binop op
        expr3 e2
+  | EUnOp (UOpSub as op, e) ->
+     fprintf out "%a%a"
+       unop op
+       expr2 e
   | _ ->
      expr3 out e
 

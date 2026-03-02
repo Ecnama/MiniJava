@@ -15,6 +15,7 @@ and raw_expression =
   | EGetVar of identifier (** Get the value of a variable. *)
   | EUnOp of unop * expression (** An unary operator. *)
   | EBinOp of binop * expression * expression (** [EBinOp (op, e1, e2)] represents the expression [e1 op e2]. *)
+  | EFunOp of funop * expression * expression (** [EFunOp (op, e1, e2)] represents the expression [e1 op e2] that has to be translated in C with a function. *)
   | EMethodCall of expression * identifier * expression list (** [EMethodCall (o, id, [p1, ..., pn])] represents the call [o.id(p1, ..., pn)]. *)
   | EArrayGet of expression * expression (** [EArrayGet (e1, e2)] represents the expression [e1[e2]]. *)
   | EArrayAlloc of expression (** [EArrayAlloc e] represents the expression [new int[e]]. *)
@@ -26,11 +27,15 @@ and constant =
   | ConstBool of bool (** Boolean constant [true] or [false]. *)
   | ConstInt of int32 (** Integer constant [[-2^31, 2^31 - 1]]. *)
 
+and funop =
+  | OpMod   (** Function Operator [%%]. *)
+
 and binop =
   | OpAdd   (** Binary operator [+]. *)
   | OpSub   (** Binary operator [-]. *)
   | OpMul   (** Binary operator [*]. *)
   | OpDiv   (** Binary operator [/]. *)
+  | OpRem   (** Binary operator [%]. *)
   | OpLt    (** Binary operator [<]. *)
   | OpGt    (** Binary operator [>]. *)
   | OpBWAnd (** Binary operator [&]. *)
@@ -40,7 +45,9 @@ and binop =
   | OpOr    (** Binary operator [||]. *)
   | OpEq    (** Binary operator [==]. *)
 
-and unop = UOpNot (** Unary operator [!]. *)
+and unop = 
+  | UOpNot  (** Unary operator [!]. *)
+  | UOpSub  (** Unary operator [-]. *)
 
 and instruction =
   | IBlock of instruction list (** [IBlock [i1; i2; ...; in]] represents the instruction [{ i1 i2 ... in }]. *)

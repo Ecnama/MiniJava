@@ -68,6 +68,8 @@ let print_constant out = function
 let print_unop out = function
   | UOpNot ->
      fprintf out "UOpNot"
+  | UOpSub ->
+     fprintf out "UOpSub"
 
 (** [print_binop out op] prints the binary operator [op] on the output channel [out]. *)
 let print_binop out = function
@@ -79,6 +81,8 @@ let print_binop out = function
      fprintf out "OpMul"
   | OpDiv ->
      fprintf out "OpDiv"
+  | OpRem ->
+     fprintf out "OpRem"
   | OpLt  ->
      fprintf out "OpLt"
   | OpGt  ->
@@ -95,6 +99,11 @@ let print_binop out = function
      fprintf out "OpBWOr"
   | OpBWXOr  ->
      fprintf out "OpBWXor"
+
+(** [print_funop out op] prints the operator [op] on the output channel [out]. *)
+let print_funop out = function
+  | OpMod ->
+     fprintf out "OpMod"
 
 (** [print_expression prefix out e] prints the expression [e] on the output channel [out].
     [prefix] is the string already printed just before [e]. *)
@@ -122,6 +131,16 @@ and print_raw_expression prefix out e pos =
        (print_expression prefix') e
   | EBinOp (op, e1, e2) ->
      fprintf out "EBinOp %a" print_binop op;
+     print_position out pos;
+     fprintf out "\n%s%s%a\n%s%s%a"
+       prefix'
+       branch
+       (print_expression (prefix' ^ pipe)) e1
+       prefix'
+       branch_end
+       (print_expression prefix') e2
+  | EFunOp (op, e1, e2) ->
+     fprintf out "EFunOp %a" print_funop op;
      print_position out pos;
      fprintf out "\n%s%s%a\n%s%s%a"
        prefix'

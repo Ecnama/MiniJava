@@ -290,6 +290,15 @@ let constant2c
   | ConstBool false -> fprintf out "0"
   | ConstInt i      -> fprintf out "%ld" i
 
+(** [unop2c out op] transpiles the unary operator [op] to C on the output channel [out]. *)
+let unop2c
+      out
+      (op : TMJ.unop)
+    : unit =
+  match op with
+  | UOpNot -> fprintf out "!"
+  | UOpSub -> fprintf out "-"
+
 (** [binop2c out op] transpiles the binary operator [op] to C on the output channel [out]. *)
 let binop2c
       out
@@ -300,6 +309,7 @@ let binop2c
   | OpSub   -> fprintf out "-"
   | OpMul   -> fprintf out "*"
   | OpDiv   -> fprintf out "/"
+  | OpRem   -> fprintf out "%%"
   | OpLt    -> fprintf out "<"
   | OpGt    -> fprintf out ">"
   | OpEq   -> fprintf out "=="
@@ -308,6 +318,14 @@ let binop2c
   | OpBWAnd -> fprintf out "&"
   | OpBWXOr  -> fprintf out "^"
   | OpBWOr  -> fprintf out "|"
+
+(** [funop2c out op] transpiles the function operator [op] to C on the output channel [out]. *)
+let funop2c
+      out
+      (op : TMJ.funop)
+    : unit =
+  match op with
+  | OpMod   -> fprintf out "__mod"
 
 (** [type2c out typ] transpiles the type [typ] to C on the output channel [out]. *)
 let type2c
@@ -425,8 +443,9 @@ let expr2c
        fprintf out "(%a)->length"
          expr2c e
 
-    | EUnOp (UOpNot, e) ->
-       fprintf out "!(%a)"
+    | EUnOp (op, e) ->
+       fprintf out "%a(%a)"
+         unop2c op
          expr2c e
 
     | EBinOp (op, e1, e2) ->
@@ -434,6 +453,13 @@ let expr2c
          expr2c e1
          binop2c op
          expr2c e2
+
+    | EFunOp (op, e1, e2) ->
+       fprintf out "%a(%a, %a)"
+         funop2c op
+         expr2c e1
+         expr2c e2
+         
   in
   expr2c out expr
 
@@ -621,6 +647,11 @@ let program2c out (p : TMJ.program) : unit =
      #pragma GCC diagnostic ignored \"-Wint-to-pointer-cast\"\n\
      struct %s { int* array; int length; };\n\
      tgc_t gc;\n\
+     int __mod(int a, int b) {\n\
+     \ \ int r = a %% b;\n\
+     \ \ if (r < 0) r += (b > 0 ? b : -b);\n\
+     \ \ return r;\n\
+     }\n\
      %a\
      %a\
      %a\

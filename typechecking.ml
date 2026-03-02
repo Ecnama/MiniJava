@@ -162,6 +162,7 @@ and typecheck_expression (cenv : class_env) (venv : variable_env) (vinit : S.t)
       let expected, returned =
         match op with
         | UOpNot -> TypBool, TypBool
+        | UOpSub -> TypInt, TypInt
       in
       let e' = typecheck_expression_expecting cenv venv vinit instanceof expected e in
       mke (TMJ.EUnOp (op, e')) returned
@@ -175,7 +176,8 @@ and typecheck_expression (cenv : class_env) (venv : variable_env) (vinit : S.t)
         | OpAdd
         | OpSub
         | OpMul
-        | OpDiv -> TypInt, TypInt
+        | OpDiv
+        | OpRem -> TypInt, TypInt
         | OpEq
         | OpLt
         | OpGt  -> TypInt, TypBool
@@ -185,6 +187,15 @@ and typecheck_expression (cenv : class_env) (venv : variable_env) (vinit : S.t)
       let e1' = typecheck_expression_expecting cenv venv vinit instanceof expected e1 in
       let e2' = typecheck_expression_expecting cenv venv vinit instanceof expected e2 in
       mke (TMJ.EBinOp (op, e1', e2')) returned
+  
+  | EFunOp (op, e1, e2) ->
+      let expected, returned =
+        match op with
+        | OpMod -> TypInt, TypInt
+      in
+      let e1' = typecheck_expression_expecting cenv venv vinit instanceof expected e1 in
+      let e2' = typecheck_expression_expecting cenv venv vinit instanceof expected e2 in
+      mke (TMJ.EFunOp (op, e1', e2')) returned
 
   | EMethodCall (o, callee, expressions) ->
       typecheck_call cenv venv vinit instanceof o callee expressions

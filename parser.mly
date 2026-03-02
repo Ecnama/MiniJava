@@ -8,7 +8,7 @@
 %token INTEGER BOOLEAN
 %token <string Location.t> IDENT
 %token CLASS PUBLIC STATIC VOID MAIN STRING EXTENDS RETURN
-%token PLUS MINUS TIMES DIV BWAND BWOR BWXOR NOT EQ LT GT AND OR
+%token PLUS MINUS TIMES DIV REM MOD BWAND BWOR BWXOR NOT EQ LT GT AND OR
 %token COMMA SEMICOLON
 %token ASSIGN
 %token LPAREN RPAREN LBRACKET RBRACKET LBRACE RBRACE
@@ -25,7 +25,7 @@
 %left EQ
 %nonassoc LT GT
 %left PLUS MINUS
-%left TIMES DIV
+%left TIMES DIV REM MOD
 %nonassoc NOT
 %nonassoc DOT LBRACKET
 
@@ -125,6 +125,9 @@ raw_expression:
 | e1 = expression op = binop e2 = expression
    { EBinOp (op, e1, e2) }
 
+| e1 = expression op = funop e2 = expression
+   { EFunOp (op, e1, e2) }
+
 | o = expression DOT c = IDENT LPAREN actuals = separated_list(COMMA, expression) RPAREN
    { EMethodCall (o, c, actuals) }
 
@@ -143,14 +146,19 @@ raw_expression:
 | NEW id = IDENT LPAREN RPAREN
    { EObjectAlloc id }
 
-| NOT e = expression
-   { EUnOp (UOpNot, e) }
+| op = unop e = expression
+   { EUnOp (op, e) }
+
+%inline unop:
+| NOT    { UOpNot }
+| MINUS  { UOpSub }
 
 %inline binop:
 | PLUS   { OpAdd }
 | MINUS  { OpSub }
 | TIMES  { OpMul }
 | DIV    { OpDiv }
+| REM    { OpRem }
 | LT     { OpLt }
 | GT     { OpGt }
 | AND    { OpAnd }
@@ -159,6 +167,9 @@ raw_expression:
 | BWAND  { OpBWAnd }
 | BWOR   { OpBWOr }
 | BWXOR  { OpBWXOr }
+
+%inline funop:
+| MOD    { OpMod }
 
 instruction:
 | b = block

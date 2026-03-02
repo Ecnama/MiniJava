@@ -29,6 +29,8 @@ rule get_token = parse
   | '-'       { MINUS }
   | '*'       { TIMES }
   | '/'       { DIV }
+  | '%'       { REM }
+  | "%%"      { MOD }
   | "&"       { BWAND }
   | "|"       { BWOR }
   | "^"       { BWXOR }

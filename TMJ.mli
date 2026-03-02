@@ -10,6 +10,7 @@ and raw_expression =
   | EGetVar of identifier
   | EUnOp of unop * expression
   | EBinOp of binop * expression * expression
+  | EFunOp of funop * expression * expression
   | EMethodCall of expression * identifier * expression list
   | EArrayGet of expression * expression
   | EArrayAlloc of expression
@@ -21,11 +22,15 @@ and constant = LMJ.constant =
   | ConstBool of bool
   | ConstInt of int32
 
+and funop = LMJ.funop =
+  | OpMod
+
 and binop = LMJ.binop =
   | OpAdd
   | OpSub
   | OpMul
   | OpDiv
+  | OpRem
   | OpLt
   | OpGt
   | OpBWAnd
@@ -35,7 +40,9 @@ and binop = LMJ.binop =
   | OpOr
   | OpEq
 
-and unop = LMJ.unop = UOpNot
+and unop = LMJ.unop = 
+  | UOpNot
+  | UOpSub
 
 and instruction =
   | IBlock of instruction list
