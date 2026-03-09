@@ -14,9 +14,11 @@
 %token LPAREN RPAREN LBRACKET RBRACKET LBRACE RBRACE
 %token THIS NEW DOT LENGTH
 %token SYSO
-%token IF ELSE WHILE
+%token IF ELSE WHILE NOELSE
 %token EOF
 
+%nonassoc NOELSE
+%nonassoc ELSE
 %left OR
 %left AND
 %left BWOR
@@ -188,10 +190,10 @@ instruction:
 | SYSO LPAREN e = expression RPAREN SEMICOLON
    { ISyso e }
 
-| IF LPAREN c = expression RPAREN i1 = block ELSE i2 = block
+| IF LPAREN c = expression RPAREN i1 = instruction ELSE i2 = instruction
    { IIf (c, i1, i2) }
 
-| IF LPAREN c = expression RPAREN i = block
+| IF LPAREN c = expression RPAREN i = instruction %prec NOELSE
    { IIf (c, i, IBlock [])}
 
 | WHILE LPAREN c = expression RPAREN i = instruction

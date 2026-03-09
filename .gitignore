@@ -2,5 +2,6 @@ _build/
 demo/
 .merlin
 mini-java
-test/**/*
+test/**
+!test/**/
 !test/**/*.java
