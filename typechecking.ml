@@ -179,6 +179,7 @@ and typecheck_expression (cenv : class_env) (venv : variable_env) (vinit : S.t)
         | OpDiv
         | OpRem -> TypInt, TypInt
         | OpEq
+        | OpNotEq
         | OpLt
         | OpGt  -> TypInt, TypBool
         | OpOr

@@ -93,6 +93,8 @@ let print_binop out = function
      fprintf out "OpOr"
   | OpEq  ->
      fprintf out "OpEq"
+  | OpNotEq  ->
+     fprintf out "OpNotEq"
   | OpBWAnd ->
      fprintf out "OpBWAnd"
   | OpBWOr  ->

@@ -62,6 +62,8 @@ let print_token show_loc out = function
      fprintf out "GT"
   | EQ ->
      fprintf out "EQ"
+  | NOTEQ ->
+     fprintf out "NOTEQ"
   | BWAND ->
      fprintf out "BWAND"
   | BWXOR ->

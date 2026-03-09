@@ -34,6 +34,7 @@ rule get_token = parse
   | "&"       { BWAND }
   | "|"       { BWOR }
   | "^"       { BWXOR }
+  | "!="      { NOTEQ }
   | "=="      { EQ }
   | "&&"      { AND }
   | "||"      { OR }
