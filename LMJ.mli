@@ -45,6 +45,8 @@ and binop =
   | OpOr    (** Binary operator [||]. *)
   | OpEq    (** Binary operator [==]. *)
   | OpNotEq  (** Binary operator [!=]. *)
+  | OpLtEq  (** Binary operator [<=]. *)
+  | OpGtEq  (** Binary operator [>=]. *)
 
 and unop = 
   | UOpNot  (** Unary operator [!]. *)

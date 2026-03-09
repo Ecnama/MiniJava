@@ -314,6 +314,8 @@ let binop2c
   | OpGt    -> fprintf out ">"
   | OpEq   -> fprintf out "=="
   | OpNotEq   -> fprintf out "!="
+  | OpLtEq   -> fprintf out "<="
+  | OpGtEq   -> fprintf out ">="
   | OpAnd   -> fprintf out "&&"
   | OpOr   -> fprintf out "||"
   | OpBWAnd -> fprintf out "&"
