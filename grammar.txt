@@ -5,6 +5,7 @@ MainClass ::= 'class' Identifier '{' 'public' 'static' 'void' 'main' "(" 'String
 ClassDeclaration ::= 'class' Identifier ( 'extends' Identifier )? '{' VarDeclaration* MethodDeclaration* '}'
 
 VarDeclaration ::= Type Identifier ';'
+        | Type Identifier '=' Expression ';'
 
 MethodDeclaration ::= 'public' Type Identifier '(' ( Type Identifier ( ',' Type Identifier )* )? ')' '{' VarDeclaration* Statement* 'return' Expression ';' '}'
 

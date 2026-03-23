@@ -258,11 +258,11 @@ let rec typecheck_instruction (cenv : class_env) (venv : variable_env) (vinit : 
     (inst : instruction) : (TMJ.instruction * S.t) =
   match inst with
   | ISetVar (v, e) ->
+      let typ = vlookup v venv in
+      let e' = typecheck_expression_expecting cenv venv vinit instanceof typ e in
       let vinit =
         S.add (Location.content v) vinit
       in
-      let typ = vlookup v venv in
-      let e' = typecheck_expression_expecting cenv venv vinit instanceof typ e in
       (TMJ.ISetVar (Location.content v, type_lmj_to_tmj typ, e'), vinit)
 
   | IArraySet (earray, eindex, evalue) ->
