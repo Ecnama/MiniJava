@@ -306,6 +306,18 @@ let rec typecheck_instruction (cenv : class_env) (venv : variable_env) (vinit : 
       let ibody', vinit = typecheck_instruction cenv venv vinit instanceof ibody in
       (TMJ.IWhile (cond', ibody'), vinit)
 
+  | IFor (id1, e1, e2, id2, e3, i3) ->
+    let t1 = vlookup id1 venv in
+    let e1' = typecheck_expression_expecting cenv venv vinit instanceof t1 e1 in
+    let vinit = S.add (Location.content id1) vinit in
+    let e2' = typecheck_expression_expecting cenv venv vinit instanceof TypBool e2 in
+    let t2 = vlookup id2 venv in
+    let e3' = typecheck_expression_expecting cenv venv vinit instanceof t2 e3 in
+    let vinit = S.add (Location.content id2) vinit in
+    let i3', vinit' =
+      typecheck_instruction cenv venv vinit instanceof i3
+    in
+    (TMJ.IFor (Location.content id1, e1', e2', Location.content id2, e3', i3'), vinit')
   | ISyso e ->
      let e' = typecheck_expression cenv venv vinit instanceof e in
             match e'.typ with
