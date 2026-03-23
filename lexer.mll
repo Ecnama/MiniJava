@@ -19,6 +19,10 @@ let integer = digit+
 let space = [' ' '\t' '\r']
 let letter = ['a'-'z''A'-'Z''_']
 let ident = letter (digit | letter)*
+let float_suffix = ['f''F']
+let float_sign = ['+''-']
+let float_exp = ['e''E'] float_sign? digit+
+let float = ((digit+ '.' digit* | '.' digit+) float_exp? | digit+ float_exp) float_suffix? | digit+ float_suffix
 
 rule get_token = parse
   | "//" [^ '\n']* '\n'
@@ -55,6 +59,7 @@ rule get_token = parse
   | "true"    { BOOL_CONST true }
   | "false"   { BOOL_CONST false }
   | "int"     { INTEGER }
+  | "float"   { FLOAT }
   | "boolean" { BOOLEAN }
   | "!"       { NOT }
   | ","       { COMMA }
@@ -73,6 +78,19 @@ rule get_token = parse
   | "if"    { IF }
   | "else"  { ELSE }
   | "while" { WHILE }
+  | float as f
+    {
+      try
+        let n = String.length f in
+        let f' =
+          if n > 0 && (f.[n - 1] = 'f' || f.[n - 1] = 'F')
+          then String.sub f 0 (n - 1)
+          else f
+        in
+        FLOAT_CONST (float_of_string f') (* Stdlib.float_of_string *)
+      with Failure _ ->
+        raise (Error "Invalid float constant")
+    }
   | integer as i
       {
         try

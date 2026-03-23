@@ -289,6 +289,7 @@ let constant2c
   | ConstBool true  -> fprintf out "1"
   | ConstBool false -> fprintf out "0"
   | ConstInt i      -> fprintf out "%ld" i
+  | ConstFloat f    -> fprintf out "%f" f
 
 (** [unop2c out op] transpiles the unary operator [op] to C on the output channel [out]. *)
 let unop2c
@@ -338,6 +339,8 @@ let type2c
   match typ with
   | TypInt -> fprintf out "int"
   | TypBool -> fprintf out "int"
+  | TypFloat -> fprintf out "float"
+  | TypFloatArray -> fprintf out "struct %s*" !struct_array_name
   | TypIntArray -> fprintf out "struct %s*" !struct_array_name
   | Typ t -> fprintf out "struct %s*" t
 
@@ -394,7 +397,18 @@ let expr2c
        let class_info = get_class_info clas in
        let index = ClassInfo.vtable_index callee class_info in
        let typ = ClassInfo.return_type callee class_info in
-       fprintf out "({ struct %s* %s = %a; %a %s->vtable[%d](%s%a); })"
+       (match typ with 
+       | TypFloat -> fprintf out "({ struct %s* %s = %a; int %s = (int)(long)%s->vtable[%d](%s%a); *((float*)&%s); })"
+         clas
+         !name1
+         expr2c o
+         !name2
+         !name1
+         index
+         !name1
+         (prec_list comma expr2c) args
+         !name2
+       | _ -> fprintf out "({ struct %s* %s = %a; %a %s->vtable[%d](%s%a); })"
          clas
          !name1
          expr2c o
@@ -402,13 +416,27 @@ let expr2c
          !name1
          index
          !name1
-         (prec_list comma expr2c) args
+         (prec_list comma expr2c) args)
 
-    | EArrayAlloc e ->
+    | EIntArrayAlloc e ->
        fprintf out "(void*)({ int %s = %a; \
                     if (%s < 0) exit(1); \
                     struct %s* res = tgc_alloc(({ extern tgc_t gc; &gc; }), sizeof(struct %s)); \
                     res->array = (int*) tgc_calloc(({ extern tgc_t gc; &gc; }), %s, sizeof(int)); \
+                    res->length = %s; res; })"
+         !name1
+         expr2c e
+         !name1
+         !struct_array_name
+         !struct_array_name
+         !name1
+         !name1
+    
+    | EFloatArrayAlloc e ->
+       fprintf out "(void*)({ int %s = %a; \
+                    if (%s < 0) exit(1); \
+                    struct %s* res = tgc_alloc(({ extern tgc_t gc; &gc; }), sizeof(struct %s)); \
+                    res->array = (float*) tgc_calloc(({ extern tgc_t gc; &gc; }), %s, sizeof(float)); \
                     res->length = %s; res; })"
          !name1
          expr2c e
@@ -425,22 +453,40 @@ let expr2c
          id
          id
 
-    | EArrayGet (ea, ei) ->
-       fprintf out "({ int %s = %a; \
-                    struct %s* %s = %a; \
-                    int res; \
-                    if (%s < 0 || %s >= %s->length) exit(1); \
-                    else res = %s->array[%s]; res; })"
-         !name1
-         expr2c ei
-         !struct_array_name
-         !name2
-         expr2c ea
-         !name1
-         !name1
-         !name2
-         !name2
-         !name1
+     | EArrayGet (ea, ei) ->
+       (match ea.typ with
+       | TypFloatArray ->
+         fprintf out "({ int %s = %a; \
+                  struct %s* %s = %a; \
+                  float res; \
+                  if (%s < 0 || %s >= %s->length) exit(1); \
+                  else res = ((float*)%s->array)[%s]; res; })"
+          !name1
+          expr2c ei
+          !struct_array_name
+          !name2
+          expr2c ea
+          !name1
+          !name1
+          !name2
+          !name2
+          !name1
+       | _ ->
+         fprintf out "({ int %s = %a; \
+                  struct %s* %s = %a; \
+                  int res; \
+                  if (%s < 0 || %s >= %s->length) exit(1); \
+                  else res = ((int*)%s->array)[%s]; res; })"
+          !name1
+          expr2c ei
+          !struct_array_name
+          !name2
+          expr2c ea
+          !name1
+          !name1
+          !name2
+          !name2
+          !name1)
 
     | EArrayLength e ->
        fprintf out "(%a)->length"
@@ -485,10 +531,15 @@ let instr2c
          (expr2c method_name class_info) e
 
     | IArraySet (id, ei, ev) ->
-       fprintf out "(%a)->array[%a] = %a;"
+       (match ev.typ with
+       | TypFloat -> fprintf out "((float*)(%a)->array)[%a] = %a;"
          (var2c method_name class_info) id
          (expr2c method_name class_info) ei
          (expr2c method_name class_info) ev
+       | _ -> fprintf out "((int*)(%a)->array)[%a] = %a;"
+         (var2c method_name class_info) id
+         (expr2c method_name class_info) ei
+         (expr2c method_name class_info) ev)
 
     | IIf (c, i1, i2) ->
        fprintf out "if (%a) %a%telse %a"
@@ -508,8 +559,11 @@ let instr2c
          nl
 
     | ISyso e ->
-       fprintf out "printf(\"%%d\\n\", %a);"
+      (match e.typ with
+        | TypFloat -> fprintf out "printf(\"%%g\\n\", (double)%a);" (**%g to trim the excess zeros for float (thanks to the runtime test)*)
          (expr2c method_name class_info) e
+        | _ -> fprintf out "printf(\"%%d\\n\", %a);"
+         (expr2c method_name class_info) e)
   in
   instr2c out ins
 
@@ -582,8 +636,12 @@ let method_definition2c
   let class_info = get_class_info class_name in
   let method_definition out (method_name, m) =
     let return2c out e =
-      fprintf out "return (void*)(%a);"
-        (expr2c method_name class_info) e
+      match e.typ with
+        | TypFloat -> fprintf out "return (void*)(*((int*)&%a));"
+            (expr2c method_name class_info) e
+        | _ ->
+          fprintf out "return (void*)(%a);"
+            (expr2c method_name class_info) e
     in
     fprintf out "void* %s_%s(struct %s* this%a) {%a%a%a\n}"
       class_name
@@ -648,7 +706,7 @@ let program2c out (p : TMJ.program) : unit =
      #include \"tgc.h\"\n\
      #pragma GCC diagnostic ignored \"-Wpointer-to-int-cast\"\n\
      #pragma GCC diagnostic ignored \"-Wint-to-pointer-cast\"\n\
-     struct %s { int* array; int length; };\n\
+    struct %s { void* array; int length; };\n\
      tgc_t gc;\n\
      int __mod(int a, int b) {\n\
      \ \ int r = a %% b;\n\

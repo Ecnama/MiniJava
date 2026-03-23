@@ -4,8 +4,9 @@
 %}
 
 %token <int32> INT_CONST
+%token <float> FLOAT_CONST
 %token <bool> BOOL_CONST
-%token INTEGER BOOLEAN
+%token INTEGER FLOAT BOOLEAN
 %token <string Location.t> IDENT
 %token CLASS PUBLIC STATIC VOID MAIN STRING EXTENDS RETURN
 %token PLUS MINUS TIMES DIV REM MOD BWAND BWOR BWXOR NOT EQ NOTEQ LTEQ GTEQ LT GT AND OR
@@ -119,6 +120,9 @@ raw_expression:
 | i = INT_CONST
    { EConst (ConstInt i) }
 
+| f = FLOAT_CONST
+   { EConst (ConstFloat f) }
+
 | b = BOOL_CONST
    { EConst (ConstBool b) }
 
@@ -138,7 +142,10 @@ raw_expression:
    { EArrayGet (a, i) }
 
 | NEW INTEGER LBRACKET e = expression RBRACKET
-   { EArrayAlloc e }
+   { EIntArrayAlloc e }
+
+| NEW FLOAT LBRACKET e = expression RBRACKET
+   { EFloatArrayAlloc e }
 
 | a = expression DOT LENGTH
    { EArrayLength a }
@@ -210,5 +217,9 @@ typ:
    { TypBool }
 | INTEGER LBRACKET RBRACKET
    { TypIntArray }
+| FLOAT
+   { TypFloat }
+| FLOAT LBRACKET RBRACKET
+   { TypFloatArray }
 | id = IDENT
    { Typ id }

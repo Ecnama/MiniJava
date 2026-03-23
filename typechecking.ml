@@ -59,6 +59,8 @@ let rec compatible (typ1 : typ) (typ2 : typ) (instanceof : identifier -> identif
   match typ1, typ2 with
   | TypInt, TypInt
   | TypBool, TypBool
+  | TypFloat, TypFloat
+  | TypFloatArray, TypFloatArray
   | TypIntArray, TypIntArray -> true
   | Typ t1, Typ t2 -> instanceof t1 t2
   | _, _ -> false
@@ -66,22 +68,28 @@ let rec compatible (typ1 : typ) (typ2 : typ) (instanceof : identifier -> identif
 (** [typ_lmj_to_tmj t] converts the [LMJ] type [t] into the equivalent [TMJ] type. *)
 let rec type_lmj_to_tmj = function
   | TypInt      -> TMJ.TypInt
+  | TypFloat    -> TMJ.TypFloat
   | TypBool     -> TMJ.TypBool
   | TypIntArray -> TMJ.TypIntArray
+  | TypFloatArray -> TMJ.TypFloatArray
   | Typ id      -> TMJ.Typ (Location.content id)
 
 (** [typ_tmj_to_lmj s e t] converts the [TMJ] type [t] into the equivalent [LMJ] type using location starting position [s] and location ending position [e]. *)
 let rec type_tmj_to_lmj startpos endpos = function
 | TMJ.TypInt      -> TypInt
+| TMJ.TypFloat    -> TypFloat
 | TMJ.TypBool     -> TypBool
 | TMJ.TypIntArray -> TypIntArray
+| TMJ.TypFloatArray -> TypFloatArray
 | TMJ.Typ id      -> Typ (Location.make startpos endpos id)
 
 (** [tmj_type_to_string t] converts the [TMJ] type [t] into a string representation. *)
 let rec tmj_type_to_string : TMJ.typ -> string = function
   | TMJ.TypInt -> "integer"
+  | TMJ.TypFloat -> "float"
   | TMJ.TypBool -> "boolean"
   | TMJ.TypIntArray -> "int[]"
+  | TMJ.TypFloatArray -> "float[]"
   | TMJ.Typ t -> t
 
 (** [type_to_string t] converts the [LMJ] type [t] into a string representation. *)
@@ -151,6 +159,9 @@ and typecheck_expression (cenv : class_env) (venv : variable_env) (vinit : S.t)
   | EConst (ConstInt i) ->
       mke (TMJ.EConst (ConstInt i)) TypInt
 
+  | EConst (ConstFloat f) ->
+      mke (TMJ.EConst (ConstFloat f)) TypFloat
+
   | EGetVar v ->
      let typ = vlookup v venv in
      let v' = Location.content v in
@@ -205,16 +216,31 @@ and typecheck_expression (cenv : class_env) (venv : variable_env) (vinit : S.t)
 
   | EArrayGet (earray, eindex) ->
       let eindex' = typecheck_expression_expecting cenv venv vinit instanceof TypInt eindex in
-      let earray' = typecheck_expression_expecting cenv venv vinit instanceof TypIntArray earray in
-      mke (TMJ.EArrayGet (earray', eindex')) TypInt
+      let earray' = typecheck_expression cenv venv vinit instanceof earray in
+      (match earray'.typ with
+       | TypIntArray ->
+           mke (TMJ.EArrayGet (earray', eindex')) TypInt
+       | TypFloatArray ->
+           mke (TMJ.EArrayGet (earray', eindex')) TypFloat
+       | _ ->
+           error earray (sprintf "Array type incorrect, got %s" (tmj_type_to_string earray'.typ)))
 
-  | EArrayAlloc elength ->
+  | EIntArrayAlloc elength ->
       let elength' = typecheck_expression_expecting cenv venv vinit instanceof TypInt elength in
-      mke (TMJ.EArrayAlloc elength') TypIntArray
+      mke (TMJ.EIntArrayAlloc elength') TypIntArray
+  
+  | EFloatArrayAlloc elength ->
+      let elength' = typecheck_expression_expecting cenv venv vinit instanceof TypInt elength in
+      mke (TMJ.EFloatArrayAlloc elength') TypFloatArray
 
   | EArrayLength earray ->
-      let earray' = typecheck_expression_expecting cenv venv vinit instanceof TypIntArray earray in
-      mke (TMJ.EArrayLength earray') TypInt
+    let earray' = typecheck_expression cenv venv vinit instanceof earray in
+    (match earray'.typ with
+     | TypIntArray
+     | TypFloatArray ->
+         mke (TMJ.EArrayLength earray') TypInt
+     | _ ->
+         error earray (sprintf "Array type incorrect, got %s" (tmj_type_to_string earray'.typ)))
 
   | EThis ->
      mke TMJ.EThis (vlookup (Location.make (Location.startpos e) (Location.endpos e) "this") venv)
@@ -240,11 +266,18 @@ let rec typecheck_instruction (cenv : class_env) (venv : variable_env) (vinit : 
       (TMJ.ISetVar (Location.content v, type_lmj_to_tmj typ, e'), vinit)
 
   | IArraySet (earray, eindex, evalue) ->
-      typecheck_expression_expecting cenv venv vinit instanceof TypIntArray
-        (Location.make (Location.startpos earray) (Location.endpos earray) (EGetVar earray))
-      |> ignore;
+      let array_typ = vlookup earray venv in
+      let value_typ =
+        match array_typ with
+        | TypIntArray -> TypInt
+        | TypFloatArray -> TypFloat
+        | _ ->
+            error earray
+              (sprintf "Type mismatch, expected int[] or float[], got %s."
+                 (type_to_string array_typ))
+      in
       let eindex' = typecheck_expression_expecting cenv venv vinit instanceof TypInt eindex in
-      let evalue' = typecheck_expression_expecting cenv venv vinit instanceof TypInt evalue in
+      let evalue' = typecheck_expression_expecting cenv venv vinit instanceof value_typ evalue in
       (TMJ.IArraySet (Location.content earray, eindex', evalue'), vinit)
 
   | IBlock instructions ->
@@ -274,8 +307,10 @@ let rec typecheck_instruction (cenv : class_env) (venv : variable_env) (vinit : 
       (TMJ.IWhile (cond', ibody'), vinit)
 
   | ISyso e ->
-     let e' = typecheck_expression_expecting cenv venv vinit instanceof TypInt e in
-     (TMJ.ISyso e', vinit)
+     let e' = typecheck_expression cenv venv vinit instanceof e in
+            match e'.typ with
+            | TypInt | TypFloat -> (TMJ.ISyso e', vinit)
+            | _ -> error e (sprintf "System.out.println expects int or float.")
 
 (** [occurences x bindings] returns the elements in [bindings] that have [x] has identifier. *)
 let occurrences (x : string) (bindings : (identifier * 'a) list) : identifier list =

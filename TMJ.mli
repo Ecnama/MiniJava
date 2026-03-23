@@ -13,7 +13,8 @@ and raw_expression =
   | EFunOp of funop * expression * expression
   | EMethodCall of expression * identifier * expression list
   | EArrayGet of expression * expression
-  | EArrayAlloc of expression
+  | EIntArrayAlloc of expression
+  | EFloatArrayAlloc of expression
   | EArrayLength of expression
   | EThis
   | EObjectAlloc of identifier
@@ -21,6 +22,7 @@ and raw_expression =
 and constant = LMJ.constant =
   | ConstBool of bool
   | ConstInt of int32
+  | ConstFloat of float
 
 and funop = LMJ.funop =
   | OpMod
@@ -59,6 +61,8 @@ and typ =
   | TypInt
   | TypBool
   | TypIntArray
+  | TypFloat
+  | TypFloatArray
   | Typ of identifier
 
 and metho = {

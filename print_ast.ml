@@ -63,6 +63,8 @@ let print_constant out = function
      fprintf out "ConstBool %s" (string_of_bool b)
   | ConstInt i ->
      fprintf out "ConstInt %ld" i
+  | ConstFloat f ->
+     fprintf out "ConstFloat %f" f
 
 (** [print_unop out op] prints the unary operator [op] on the output channel [out]. *)
 let print_unop out = function
@@ -180,8 +182,15 @@ and print_raw_expression prefix out e pos =
        prefix'
        branch_end
        (print_expression prefix') e2
-  | EArrayAlloc e ->
-     fprintf out "EArrayAlloc";
+  | EIntArrayAlloc e ->
+     fprintf out "EIntArrayAlloc";
+     print_position out pos;
+     fprintf out "\n%s%s%a"
+       prefix'
+       branch_end
+       (print_expression prefix') e
+  | EFloatArrayAlloc e ->
+     fprintf out "EFloatArrayAlloc";
      print_position out pos;
      fprintf out "\n%s%s%a"
        prefix'
@@ -272,6 +281,10 @@ let print_type out typ =
      fprintf out "bool"
   | TypIntArray ->
      fprintf out "int[]"
+  | TypFloatArray ->
+     fprintf out "float[]"
+  | TypFloat ->
+     fprintf out "float"
   | Typ id ->
      fprintf out "%a" print_identifier id
 

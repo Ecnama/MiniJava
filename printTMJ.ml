@@ -12,6 +12,8 @@ let constant out = function
      fprintf out "false"
   | ConstInt i ->
      fprintf out "%ld" i
+  | ConstFloat f ->
+     fprintf out "%f" f
 
 (** [unop out op] prints the unary operator [op] on the output channel [out]. *)
 let unop out = function
@@ -96,8 +98,11 @@ let rec expr0 out e = match e.raw_expression with
        expr e
 
 and expr1 out e = match e.raw_expression with
-  | EArrayAlloc e ->
+  | EIntArrayAlloc e ->
      fprintf out "new int[%a]"
+       expr e
+  | EFloatArrayAlloc e ->
+     fprintf out "new float[%a]"
        expr e
   | _ ->
      expr0 out e
@@ -236,6 +241,10 @@ let rec instr out = function
 let typ out = function
   | TypInt ->
      fprintf out "int"
+  | TypFloat ->
+     fprintf out "float"
+  | TypFloatArray ->
+     fprintf out "float[]"
   | TypBool ->
      fprintf out "boolean"
   | TypIntArray ->
