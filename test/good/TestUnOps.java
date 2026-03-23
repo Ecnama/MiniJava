@@ -1,10 +1,10 @@
-class TestFunOps {
+class TestUnOps {
 	public static void main(String[] args) {
-		System.out.println(new FunOps().start());
+		System.out.println(new UnOps().start());
 	}
 }
 
-class FunOps {
+class UnOps {
 	public int start() {
 		int a;
 		boolean b;
