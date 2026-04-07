@@ -57,7 +57,8 @@ and unop =
 and instruction =
   | IBlock of instruction list (** [IBlock [i1; i2; ...; in]] represents the instruction [{ i1 i2 ... in }]. *)
   | IIf of expression * instruction * instruction (** [IIf (e, i1, i2)] represents the instruction [if (e) i1 else i2]. *)
-    | IWhile of expression * instruction (** [IWile (e, ins)] represents the instruction [while (e) ins]. *)
+  | IWhile of expression * instruction (** [IWile (e, ins)] represents the instruction [while (e) ins]. *)
+  | IDoWhile of instruction * expression (** [IWile (ins, e)] represents the instruction [do ins while (e)]. *)
   | IFor of identifier * expression * expression * identifier * expression * instruction (** [IFor (i1, e1, e2, i2, e3, ins)] represents the instruction [for (i1 = e1; e2; i2 = e3) ins]. *)
   | ISyso of expression (** [ISyso e] represents the instruction [System.out.println(e);]. *)
   | ISetVar of identifier * expression (** [ISetVar (id, e)] represents the instruction [id = e;]. *)

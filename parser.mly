@@ -15,7 +15,7 @@
 %token LPAREN RPAREN LBRACKET RBRACKET LBRACE RBRACE
 %token THIS NEW DOT LENGTH
 %token SYSO
-%token IF ELSE WHILE FOR NOELSE BREAK
+%token IF ELSE DO WHILE FOR NOELSE BREAK
 %token EOF
 
 %nonassoc NOELSE
@@ -213,6 +213,9 @@ instruction:
 
 | WHILE LPAREN c = expression RPAREN i = instruction
    { IWhile (c, i) }
+
+| DO i = instruction WHILE LPAREN c = expression RPAREN SEMICOLON
+   { IDoWhile (i, c) }
 
 | FOR LPAREN id1 = IDENT ASSIGN e1 = expression SEMICOLON e2 = expression SEMICOLON id2 = IDENT ASSIGN e3 = expression RPAREN i3 = instruction
    { IFor (id1, e1, e2, id2, e3, i3) }

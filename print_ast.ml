@@ -246,6 +246,14 @@ let rec print_instruction prefix out i =
        prefix'
        branch_end
        (print_instruction prefix') i
+  | IDoWhile (i, e) ->
+     fprintf out "IDoWhile\n%s%s%a\n%s%s%a"
+       prefix'
+       branch
+       (print_instruction (prefix' ^ pipe)) i
+       prefix'
+       branch_end
+       (print_expression prefix') e
   | IFor (id1, e1, e2, id2, e3, i3) ->
      fprintf out "IFor\n%s%s%a\n%s%s%a\n%s%s%a\n%s%s%a\n%s%s%a\n%s%s%a"
        prefix'

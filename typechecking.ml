@@ -306,6 +306,11 @@ let rec typecheck_instruction (cenv : class_env) (venv : variable_env) (vinit : 
       let ibody', vinit = typecheck_instruction cenv venv vinit instanceof ibody in
       (TMJ.IWhile (cond', ibody'), vinit)
 
+  | IDoWhile (ibody, cond) ->
+      let ibody', vinit = typecheck_instruction cenv venv vinit instanceof ibody in
+      let cond' = typecheck_expression_expecting cenv venv vinit instanceof TypBool cond in
+      (TMJ.IDoWhile (ibody', cond'), vinit)
+
   | IFor (id1, e1, e2, id2, e3, i3) ->
     let t1 = vlookup id1 venv in
     let e1' = typecheck_expression_expecting cenv venv vinit instanceof t1 e1 in
@@ -324,7 +329,7 @@ let rec typecheck_instruction (cenv : class_env) (venv : variable_env) (vinit : 
      (match e'.typ with
       | TypInt | TypFloat -> (TMJ.ISyso e', vinit)
       | _ -> error e (sprintf "System.out.println expects int or float."))
-      
+
   | IBreak -> (TMJ.IBreak, vinit)
 
 (** [occurences x bindings] returns the elements in [bindings] that have [x] has identifier. *)

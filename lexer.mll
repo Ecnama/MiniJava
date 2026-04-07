@@ -77,6 +77,7 @@ rule get_token = parse
   | "System.out.println" { SYSO }
   | "if"    { IF }
   | "else"  { ELSE }
+  | "do"    { DO }
   | "while" { WHILE }
   | "for"   { FOR }
   | "break" { BREAK }
