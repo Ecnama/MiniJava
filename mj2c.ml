@@ -289,6 +289,7 @@ let constant2c
   | ConstBool true  -> fprintf out "1"
   | ConstBool false -> fprintf out "0"
   | ConstInt i      -> fprintf out "%ld" i
+  | ConstString s   -> fprintf out "\"%s\"" s
   | ConstFloat f    -> fprintf out "%f" f
 
 (** [unop2c out op] transpiles the unary operator [op] to C on the output channel [out]. *)
@@ -339,6 +340,7 @@ let type2c
   match typ with
   | TypInt -> fprintf out "int"
   | TypBool -> fprintf out "int"
+  | TypString -> fprintf out "char*"
   | TypFloat -> fprintf out "float"
   | TypFloatArray -> fprintf out "struct %s*" !struct_array_name
   | TypIntArray -> fprintf out "struct %s*" !struct_array_name
@@ -577,7 +579,9 @@ let instr2c
 
     | ISyso e ->
       (match e.typ with
-        | TypFloat -> fprintf out "printf(\"%%g\\n\", (double)%a);" (**%g to trim the excess zeros for float (thanks to the runtime test)*)
+        | TypFloat -> fprintf out "printf(\"%%g\\n\", (double)%a);" (* %g to trim the excess zeros for float (thanks to the runtime test) *)
+         (expr2c method_name class_info) e
+        | TypString -> fprintf out "printf(\"%%s\\n\", %a);"
          (expr2c method_name class_info) e
         | _ -> fprintf out "printf(\"%%d\\n\", %a);"
          (expr2c method_name class_info) e)

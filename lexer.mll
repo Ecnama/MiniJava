@@ -23,6 +23,7 @@ let float_suffix = ['f''F']
 let float_sign = ['+''-']
 let float_exp = ['e''E'] float_sign? digit+
 let float = ((digit+ '.' digit* | '.' digit+) float_exp? | digit+ float_exp) float_suffix? | digit+ float_suffix
+let string = '"' [^ '"']* '"'
 
 rule get_token = parse
   | "//" [^ '\n']* '\n'
@@ -95,6 +96,19 @@ rule get_token = parse
       with Failure _ ->
         raise (Error "Invalid float constant")
     }
+  | string as s
+      {
+        try
+          let n = String.length s in
+          let s' =
+            if n > 1 && s.[0] = '"' && s.[n - 1] = '"'
+            then String.sub s 1 (n - 2)
+            else s
+          in
+          STRING_CONST s'
+        with Failure _ ->
+          raise (Error "Invalid string constant")
+      }
   | integer as i
       {
         try

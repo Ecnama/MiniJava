@@ -10,6 +10,8 @@ let constant out = function
      fprintf out "true"
   | ConstBool false ->
      fprintf out "false"
+  | ConstString s ->
+     fprintf out "\"%s\"" s
   | ConstInt i ->
      fprintf out "%ld" i
   | ConstFloat f ->
@@ -263,6 +265,8 @@ let typ out = function
      fprintf out "float[]"
   | TypBool ->
      fprintf out "boolean"
+  | TypString ->
+      fprintf out "string"
   | TypIntArray ->
      fprintf out "int[]"
   | Typ id ->

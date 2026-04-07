@@ -16,6 +16,8 @@ let print_token show_loc out = function
      fprintf out "FLOAT_CONST %s%f%s" lquote f rquote
   | BOOL_CONST b ->
      fprintf out "BOOL_CONST %s%s%s" lquote (string_of_bool b) rquote
+  | STRING_CONST s ->
+     fprintf out "STRING_CONST %s%s%s" lquote s rquote
   | INTEGER ->
      fprintf out "INTEGER"
   | FLOAT ->

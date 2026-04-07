@@ -11,7 +11,7 @@ type expression = raw_expression Location.t
 
 (** An expression without position informations. *)
 and raw_expression =
-  | EConst of constant (** A integer, float or boolean constant. *)
+  | EConst of constant (** A integer, float, boolean or string constant. *)
   | EGetVar of identifier (** Get the value of a variable. *)
   | EUnOp of unop * expression (** An unary operator. *)
   | EBinOp of binop * expression * expression (** [EBinOp (op, e1, e2)] represents the expression [e1 op e2]. *)
@@ -28,6 +28,7 @@ and constant =
   | ConstBool of bool (** Boolean constant [true] or [false]. *)
   | ConstInt of int32 (** Integer constant [[-2^31, 2^31 - 1]]. *)
   | ConstFloat of float (** Float constant. *)
+  | ConstString of string (** String constant. *)
 
 and funop =
   | OpMod   (** Function Operator [%%]. *)
@@ -69,6 +70,7 @@ and instruction =
 and typ =
   | TypInt (** Type [int]. *)
   | TypBool (** Type [bool]. *)
+  | TypString (** Type [string]. *)
   | TypIntArray (** Type [int[]]. *)
   | TypFloat (** Type [float]. *)
   | TypFloatArray (** Type [float[]]. *)

@@ -23,7 +23,8 @@ and constant = LMJ.constant =
   | ConstBool of bool
   | ConstInt of int32
   | ConstFloat of float
-
+  | ConstString of string
+  
 and funop = LMJ.funop =
   | OpMod
 
@@ -64,6 +65,7 @@ and instruction =
 and typ =
   | TypInt
   | TypBool
+  | TypString
   | TypIntArray
   | TypFloat
   | TypFloatArray

@@ -60,6 +60,7 @@ let rec compatible (typ1 : typ) (typ2 : typ) (instanceof : identifier -> identif
   | TypInt, TypInt
   | TypBool, TypBool
   | TypFloat, TypFloat
+  | TypString, TypString
   | TypFloatArray, TypFloatArray
   | TypIntArray, TypIntArray -> true
   | Typ t1, Typ t2 -> instanceof t1 t2
@@ -70,6 +71,7 @@ let rec type_lmj_to_tmj = function
   | TypInt      -> TMJ.TypInt
   | TypFloat    -> TMJ.TypFloat
   | TypBool     -> TMJ.TypBool
+  | TypString   -> TMJ.TypString
   | TypIntArray -> TMJ.TypIntArray
   | TypFloatArray -> TMJ.TypFloatArray
   | Typ id      -> TMJ.Typ (Location.content id)
@@ -79,6 +81,7 @@ let rec type_tmj_to_lmj startpos endpos = function
 | TMJ.TypInt      -> TypInt
 | TMJ.TypFloat    -> TypFloat
 | TMJ.TypBool     -> TypBool
+| TMJ.TypString   -> TypString
 | TMJ.TypIntArray -> TypIntArray
 | TMJ.TypFloatArray -> TypFloatArray
 | TMJ.Typ id      -> Typ (Location.make startpos endpos id)
@@ -88,6 +91,7 @@ let rec tmj_type_to_string : TMJ.typ -> string = function
   | TMJ.TypInt -> "integer"
   | TMJ.TypFloat -> "float"
   | TMJ.TypBool -> "boolean"
+  | TMJ.TypString -> "string"
   | TMJ.TypIntArray -> "int[]"
   | TMJ.TypFloatArray -> "float[]"
   | TMJ.Typ t -> t
@@ -161,6 +165,9 @@ and typecheck_expression (cenv : class_env) (venv : variable_env) (vinit : S.t)
 
   | EConst (ConstFloat f) ->
       mke (TMJ.EConst (ConstFloat f)) TypFloat
+    
+  | EConst (ConstString s) ->
+      mke (TMJ.EConst (ConstString s)) TypString
 
   | EGetVar v ->
      let typ = vlookup v venv in
@@ -330,8 +337,8 @@ let rec typecheck_instruction (cenv : class_env) (venv : variable_env) (vinit : 
   | ISyso e ->
      let e' = typecheck_expression cenv venv vinit instanceof e in
      (match e'.typ with
-      | TypInt | TypFloat -> (TMJ.ISyso e', vinit)
-      | _ -> error e (sprintf "System.out.println expects int or float."))
+      | TypInt | TypFloat | TypString -> (TMJ.ISyso e', vinit)
+      | _ -> error e (sprintf "System.out.println expects int, float, or string."))
 
   | IBreak -> (TMJ.IBreak, vinit)
 
