@@ -573,6 +573,9 @@ let instr2c
          (expr2c method_name class_info) e
         | _ -> fprintf out "printf(\"%%d\\n\", %a);"
          (expr2c method_name class_info) e)
+         
+    | IBreak ->
+       fprintf out "break;"
   in
   instr2c out ins
 

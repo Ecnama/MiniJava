@@ -79,6 +79,7 @@ rule get_token = parse
   | "else"  { ELSE }
   | "while" { WHILE }
   | "for"   { FOR }
+  | "break" { BREAK }
   | float as f
     {
       try

@@ -244,6 +244,8 @@ let rec instr out = function
   | ISyso e ->
      fprintf out "System.out.println(%a);"
        expr e
+  | IBreak ->
+     fprintf out "break;"
 
 (** [typ out t] prints the type [t] on the output channel [out]. *)
 let typ out = function

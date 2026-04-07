@@ -318,11 +318,14 @@ let rec typecheck_instruction (cenv : class_env) (venv : variable_env) (vinit : 
       typecheck_instruction cenv venv vinit instanceof i3
     in
     (TMJ.IFor (Location.content id1, e1', e2', Location.content id2, e3', i3'), vinit')
+
   | ISyso e ->
      let e' = typecheck_expression cenv venv vinit instanceof e in
-            match e'.typ with
-            | TypInt | TypFloat -> (TMJ.ISyso e', vinit)
-            | _ -> error e (sprintf "System.out.println expects int or float.")
+     (match e'.typ with
+      | TypInt | TypFloat -> (TMJ.ISyso e', vinit)
+      | _ -> error e (sprintf "System.out.println expects int or float."))
+      
+  | IBreak -> (TMJ.IBreak, vinit)
 
 (** [occurences x bindings] returns the elements in [bindings] that have [x] has identifier. *)
 let occurrences (x : string) (bindings : (identifier * 'a) list) : identifier list =

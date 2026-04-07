@@ -285,6 +285,8 @@ let rec print_instruction prefix out i =
        prefix'
        branch_end
        (print_expression prefix') e2
+   | IBreak ->
+      fprintf out "IBreak"
 
 (** [print_instruction_list prefix out l] prints the list of instructions [l] on the output channel [out].
     [prefix] is the current prefix string, but currently the position in the output channel [out] is

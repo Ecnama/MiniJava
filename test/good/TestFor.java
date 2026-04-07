@@ -15,6 +15,9 @@ class Main {
         a = new int[n];
         for (i = 0; i < n; i = i + 1) {
             a[i] = i;
+            if (i == 10) {
+                break;
+            }
         }
         return a;
     }

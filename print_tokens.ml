@@ -120,6 +120,8 @@ let print_token show_loc out = function
      fprintf out "WHILE"
   | FOR ->
      fprintf out "FOR"
+  | BREAK ->
+     fprintf out "BREAK"
   | EOF ->
      fprintf out "EOF"
 

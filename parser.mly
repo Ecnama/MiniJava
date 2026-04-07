@@ -15,7 +15,7 @@
 %token LPAREN RPAREN LBRACKET RBRACKET LBRACE RBRACE
 %token THIS NEW DOT LENGTH
 %token SYSO
-%token IF ELSE WHILE FOR NOELSE
+%token IF ELSE WHILE FOR NOELSE BREAK
 %token EOF
 
 %nonassoc NOELSE
@@ -192,6 +192,9 @@ raw_expression:
 instruction:
 | b = block
    { b }
+
+| BREAK SEMICOLON
+   { IBreak }
 
 | id = IDENT ASSIGN e = expression SEMICOLON
    { ISetVar (id, e) }
