@@ -3,137 +3,81 @@ open Printf
 
 (** UTF8 sequences for different symbols. *)
 let lquote = "\xe2\x80\x98"
+
 let rquote = "\xe2\x80\x98"
 let rtriangle = "\xe2\x96\xb8"
 let ltriangle = "\xe2\x97\x82"
 
-(** [print_token show_loc out token] prints [token] on the out channel [out].
-    If [show_loc] is true, prints position informations for the identifiers. *)
+(** [print_token show_loc out token] prints [token] on the out channel [out]. If
+    [show_loc] is true, prints position informations for the identifiers. *)
 let print_token show_loc out = function
-  | INT_CONST i ->
-     fprintf out "INT_CONST %s%ld%s" lquote i rquote
-  | FLOAT_CONST f ->
-     fprintf out "FLOAT_CONST %s%f%s" lquote f rquote
+  | INT_CONST i -> fprintf out "INT_CONST %s%ld%s" lquote i rquote
+  | FLOAT_CONST f -> fprintf out "FLOAT_CONST %s%f%s" lquote f rquote
   | BOOL_CONST b ->
-     fprintf out "BOOL_CONST %s%s%s" lquote (string_of_bool b) rquote
-  | STRING_CONST s ->
-     fprintf out "STRING_CONST %s%s%s" lquote s rquote
-  | INTEGER ->
-     fprintf out "INTEGER"
-  | FLOAT ->
-     fprintf out "FLOAT"
-  | BOOLEAN ->
-     fprintf out "BOOLEAN"
+      fprintf out "BOOL_CONST %s%s%s" lquote (string_of_bool b) rquote
+  | STRING_CONST s -> fprintf out "STRING_CONST %s%s%s" lquote s rquote
+  | INTEGER -> fprintf out "INTEGER"
+  | FLOAT -> fprintf out "FLOAT"
+  | BOOLEAN -> fprintf out "BOOLEAN"
   | IDENT id ->
-     if show_loc then
-       let pos = Location.startpos id in
-       let l = pos.pos_lnum in
-       let c = pos.pos_cnum - pos.pos_bol + 1 in
-       fprintf out "IDENT %s%s%s %s line %d, char %d %s" lquote (Location.content id) rquote rtriangle l c ltriangle
-     else
-       fprintf out "IDENT %s%s%s" lquote (Location.content id) rquote
-  | CLASS ->
-     fprintf out "CLASS"
-  | PUBLIC ->
-     fprintf out "PUBLIC"
-  | STATIC ->
-     fprintf out "STATIC"
-  | VOID ->
-     fprintf out "VOID"
-  | MAIN ->
-     fprintf out "MAIN"
-  | STRING ->
-     fprintf out "STRING"
-  | EXTENDS ->
-     fprintf out "EXTENDS"
-  | RETURN ->
-     fprintf out "RETURN"
-  | PLUS ->
-     fprintf out "PLUS"
-  | INCR ->
-     fprintf out "INCR"
-  | DECR ->
-     fprintf out "DECR"
-  | MINUS ->
-     fprintf out "MINUS"
-  | TIMES ->
-     fprintf out "TIMES"
-  | DIV ->
-     fprintf out "DIV"
-  | REM ->
-     fprintf out "REM"
-  | MOD ->
-     fprintf out "MOD"
-  | NOT ->
-     fprintf out "NOT"
-  | LT ->
-     fprintf out "LT"
-  | GT ->
-     fprintf out "GT"
-  | EQ ->
-     fprintf out "EQ"
-  | NOTEQ ->
-     fprintf out "NOTEQ"
-  | LTEQ ->
-     fprintf out "LTEQ"
-  | GTEQ ->
-     fprintf out "GTEQ"
-  | BWAND ->
-     fprintf out "BWAND"
-  | BWXOR ->
-     fprintf out "BWXOR"
-  | BWOR ->
-     fprintf out "BWOR"
-  | OR ->
-     fprintf out "OR"
-  | AND ->
-     fprintf out "AND"
-  | COMMA ->
-     fprintf out "COMMA"
-  | SEMICOLON ->
-     fprintf out "SEMICOLON"
-  | ASSIGN ->
-     fprintf out "ASSIGN"
-  | LPAREN ->
-     fprintf out "LPAREN"
-  | RPAREN ->
-     fprintf out "RPAREN"
-  | LBRACKET ->
-     fprintf out "LBRACKET"
-  | RBRACKET ->
-     fprintf out "RBRACKET"
-  | LBRACE ->
-     fprintf out "LBRACE"
-  | RBRACE ->
-     fprintf out "RBRACE"
-  | THIS ->
-     fprintf out "THIS"
-  | NEW ->
-     fprintf out "NEW"
-  | DOT ->
-     fprintf out "DOT"
-  | LENGTH ->
-     fprintf out "LENGTH"
-  | SYSO ->
-     fprintf out "SYSO"
-  | IF ->
-     fprintf out "IF"
-  | ELSE ->
-     fprintf out "ELSE"
-  | NOELSE ->
-     fprintf out "NOELSE"
-  | DO ->
-     fprintf out "DO"
-  | WHILE ->
-     fprintf out "WHILE"
-  | FOR ->
-     fprintf out "FOR"
-  | BREAK ->
-     fprintf out "BREAK"
-  | EOF ->
-     fprintf out "EOF"
-  | CONTINUE ->
-     fprintf out "CONTINUE"
+      if show_loc then
+        let pos = Location.startpos id in
+        let l = pos.pos_lnum in
+        let c = pos.pos_cnum - pos.pos_bol + 1 in
+        fprintf out "IDENT %s%s%s %s line %d, char %d %s" lquote
+          (Location.content id) rquote rtriangle l c ltriangle
+      else fprintf out "IDENT %s%s%s" lquote (Location.content id) rquote
+  | CLASS -> fprintf out "CLASS"
+  | PUBLIC -> fprintf out "PUBLIC"
+  | STATIC -> fprintf out "STATIC"
+  | VOID -> fprintf out "VOID"
+  | MAIN -> fprintf out "MAIN"
+  | STRING -> fprintf out "STRING"
+  | EXTENDS -> fprintf out "EXTENDS"
+  | RETURN -> fprintf out "RETURN"
+  | PLUS -> fprintf out "PLUS"
+  | INCR -> fprintf out "INCR"
+  | DECR -> fprintf out "DECR"
+  | MINUS -> fprintf out "MINUS"
+  | TIMES -> fprintf out "TIMES"
+  | DIV -> fprintf out "DIV"
+  | REM -> fprintf out "REM"
+  | MOD -> fprintf out "MOD"
+  | NOT -> fprintf out "NOT"
+  | LT -> fprintf out "LT"
+  | GT -> fprintf out "GT"
+  | EQ -> fprintf out "EQ"
+  | NOTEQ -> fprintf out "NOTEQ"
+  | LTEQ -> fprintf out "LTEQ"
+  | GTEQ -> fprintf out "GTEQ"
+  | BWAND -> fprintf out "BWAND"
+  | BWXOR -> fprintf out "BWXOR"
+  | BWOR -> fprintf out "BWOR"
+  | OR -> fprintf out "OR"
+  | AND -> fprintf out "AND"
+  | COMMA -> fprintf out "COMMA"
+  | SEMICOLON -> fprintf out "SEMICOLON"
+  | ASSIGN -> fprintf out "ASSIGN"
+  | LPAREN -> fprintf out "LPAREN"
+  | RPAREN -> fprintf out "RPAREN"
+  | LBRACKET -> fprintf out "LBRACKET"
+  | RBRACKET -> fprintf out "RBRACKET"
+  | LBRACE -> fprintf out "LBRACE"
+  | RBRACE -> fprintf out "RBRACE"
+  | THIS -> fprintf out "THIS"
+  | NEW -> fprintf out "NEW"
+  | DOT -> fprintf out "DOT"
+  | LENGTH -> fprintf out "LENGTH"
+  | SYSO -> fprintf out "SYSO"
+  | IF -> fprintf out "IF"
+  | ELSE -> fprintf out "ELSE"
+  | NOELSE -> fprintf out "NOELSE"
+  | DO -> fprintf out "DO"
+  | WHILE -> fprintf out "WHILE"
+  | FOR -> fprintf out "FOR"
+  | BREAK -> fprintf out "BREAK"
+  | EOF -> fprintf out "EOF"
+  | CONTINUE -> fprintf out "CONTINUE"
 
 let print out lexbuf show_loc =
   let token = ref (Lexer.get_token lexbuf) in

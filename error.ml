@@ -1,11 +1,11 @@
 open Lexing
 
 let position pos =
-  (** [pos.pos_fname] is the name of the file. *)
+  (* [pos.pos_fname] is the name of the file. *)
   let file = pos.pos_fname in
-  (** [pos.pos_lnum] is the current line number (starting from 1). *)
+  (* [pos.pos_lnum] is the current line number (starting from 1). *)
   let l = pos.pos_lnum in
-  (** [pos.pos_cnum] is the current character number from the beginning
+  (* [pos.pos_cnum] is the current character number from the beginning
       of the file (starting from 0).
       [pos.pos_bol] is the current character number from the beginning
       of the file to the beginning of the current line.

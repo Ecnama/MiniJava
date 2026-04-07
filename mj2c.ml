@@ -10,11 +10,12 @@ open TMJ
     But [array] could be the name of a class and in this case, we have to create a new name. *)
 let struct_array_name = ref ""
 
-(** [name1] is a fresh name, different from all other variables in the MiniJava program. *)
+(** [name1] is a fresh name, different from all other variables in the MiniJava
+    program. *)
 let name1 = ref ""
 
-(** [name2] is a fresh name, different from all other variables in the MiniJava program,
-    and different from [name1]. *)
+(** [name2] is a fresh name, different from all other variables in the MiniJava
+    program, and different from [name1]. *)
 let name2 = ref ""
 
 let indentation = 2
@@ -28,63 +29,60 @@ let indentation = 2
     and [b = List.assoc "B" defs]
     and [c = List.assoc "C" defs]
     then [fold_class_hierarchy f defs (Some "C") acc] is [f "C" c (f "B" b (f "A" a acc))]. *)
-let rec fold_class_hierarchy
-          (f : string -> TMJ.clas -> 'a -> 'a)
-          (defs : (TMJ.identifier * TMJ.clas) list)
-          (parent : string option)
-          (acc : 'a)
-        : 'a =
+let rec fold_class_hierarchy (f : string -> TMJ.clas -> 'a -> 'a)
+    (defs : (TMJ.identifier * TMJ.clas) list) (parent : string option)
+    (acc : 'a) : 'a =
   match parent with
   | None -> acc
-  | Some name ->
-     try
-       let c = List.assoc name defs in
-       f name c (fold_class_hierarchy f defs c.extends acc)
-     with Not_found ->
-       acc
+  | Some name -> (
+      try
+        let c = List.assoc name defs in
+        f name c (fold_class_hierarchy f defs c.extends acc)
+      with Not_found -> acc)
 
 module SM = StringMap
 
 module type ClassInfoType = sig
   type t
-  (** [create name c defs] creates a [ClassInfoType.t] from the [name] of a class,
+
+  (* [create name c defs] creates a [ClassInfoType.t] from the [name] of a class,
       the class [c] and all class definitions [defs]. *)
   val create : string -> TMJ.clas -> (identifier * clas) list -> t
 
-  (** [class_name class_info] returns the name of the class of this [class_info]. *)
+  (* [class_name class_info] returns the name of the class of this [class_info]. *)
   val class_name : t -> string
 
-  (** [is_attribute m v class_info] checks if the variable [v] in the context of
+  (* [is_attribute m v class_info] checks if the variable [v] in the context of
      method [m] is an attribute of the [class_info] or not (if not it is a parameter or a local variable). *)
   val is_attribute : string -> string -> t -> bool
 
-  (** [method_class_origin m class_info] returns the name of the class, in the class hierarchy for
+  (* [method_class_origin m class_info] returns the name of the class, in the class hierarchy for
       this [class_info], where the method [m] is last defined. *)
   val method_class_origin : string -> t -> string
 
-  (** [attribute_class_origin a class_info] returns the name of the class, in the class hierarchy for this [class_info],
+  (* [attribute_class_origin a class_info] returns the name of the class, in the class hierarchy for this [class_info],
       where the attribute [a] is last defined. *)
   val attribute_class_origin : string -> t -> string
 
-  (** [vtable_index m class_info] returns the index of the method [m] in the virtual table for this [class_info]. *)
+  (* [vtable_index m class_info] returns the index of the method [m] in the virtual table for this [class_info]. *)
   val vtable_index : string -> t -> int
 
-  (** [return_type m class_info] gets the return type of the method [m] for this [class_info]. *)
+  (* [return_type m class_info] gets the return type of the method [m] for this [class_info]. *)
   val return_type : string -> t -> TMJ.typ
 
-  (** [get_methods class_info] returns all the method names of the [class_info] in a list.
+  (* [get_methods class_info] returns all the method names of the [class_info] in a list.
       A method name is prefixed by the class where the method is last defined. The list is
       sorted by increasing method's vtable indices. *)
   val get_methods : t -> string list
 
-  (** [get_attributes class_info] returns a list of all the attribute names of the [class_info] associated with their types.
+  (* [get_attributes class_info] returns a list of all the attribute names of the [class_info] associated with their types.
       An attribute name is prefixed by the class where it is defined.
       The order in this list is such that the attributes for a parent class are put before the attributes of a child class.*)
   val get_attributes : t -> (string * TMJ.typ) list
 end
 
 module ClassInfo : ClassInfoType = struct
-  (** If we have the following classes
+  (* If we have the following classes
     class A {
       int a;
     }
@@ -100,7 +98,7 @@ module ClassInfo : ClassInfoType = struct
    C structure in a correct order and the third element is the type of the attribute. *)
   type attribute_info = (string * int * TMJ.typ) list SM.t
 
-  (** If we have the following classes
+  (* If we have the following classes
     class A {
       public int m1() { return 1; }
       public int m2() { return 2; }
@@ -119,20 +117,20 @@ module ClassInfo : ClassInfoType = struct
   type method_info = (string * int * TMJ.metho) SM.t
 
   type t = {
-      class_name : string;
-      attribute_info : attribute_info;
-      method_info : method_info
-    }
+    class_name : string;
+    attribute_info : attribute_info;
+    method_info : method_info;
+  }
 
   let create class_name c defs =
     let attribute_info =
-      (** If a parent class and a child class have the same attribute name, the attribute
+      (* If a parent class and a child class have the same attribute name, the attribute
             of the child class is before the attribute of the parent class in the list. *)
       let update class_name index typ = function
-        | None -> Some [class_name, index, typ]
+        | None -> Some [ (class_name, index, typ) ]
         | Some l -> Some ((class_name, index, typ) :: l)
       in
-      (** The [index] is used to sort the attributes in the C structure. The attributes of a child
+      (* The [index] is used to sort the attributes in the C structure. The attributes of a child
             must come after the attributes of the parent. *)
       let index = ref 0 in
       fold_class_hierarchy
@@ -140,17 +138,12 @@ module ClassInfo : ClassInfoType = struct
           let res =
             List.fold_left
               (fun acc (attribute_name, t) ->
-                SM.update attribute_name (update class_name !index t) acc
-              )
-              acc
-              clas.attributes
+                SM.update attribute_name (update class_name !index t) acc)
+              acc clas.attributes
           in
           incr index;
-          res
-        )
-        defs
-        (Some class_name)
-        SM.empty
+          res)
+        defs (Some class_name) SM.empty
     in
     let method_info =
       fold_class_hierarchy
@@ -159,7 +152,7 @@ module ClassInfo : ClassInfoType = struct
           List.fold_left
             (fun acc (method_name, m) ->
               if SM.mem method_name acc then
-                (** If we have the following classes
+                (* If we have the following classes
                           class A {
                             public int m1() { return 1; }
                             public int m2() { return 2; }
@@ -176,27 +169,19 @@ module ClassInfo : ClassInfoType = struct
                       [B.m3] and [C.m3] must also have the same vtable index. *)
                 let _, index, _ = SM.find method_name acc in
                 SM.add method_name (class_name, index, m) acc
-              else
-                begin
-                  let index = !n in
-                  incr n;
-                  SM.add method_name (class_name, index, m) acc
-                end)
-            acc
-            clas.methods
-        )
-        defs
-        (Some class_name)
-        SM.empty
+              else begin
+                let index = !n in
+                incr n;
+                SM.add method_name (class_name, index, m) acc
+              end)
+            acc clas.methods)
+        defs (Some class_name) SM.empty
     in
-    { class_name = class_name;
-      attribute_info = attribute_info;
-      method_info = method_info }
+    { class_name; attribute_info; method_info }
 
-  let class_name class_info =
-    class_info.class_name
+  let class_name class_info = class_info.class_name
 
-  (** [find_variable_type m v class_info] gets the type of a variable [v] (formal parameter or local variable)
+  (* [find_variable_type m v class_info] gets the type of a variable [v] (formal parameter or local variable)
       for the method [m] in [class_info]. If the variable doesn't exist, raises [Not_found]. *)
   let find_variable_type m v class_info =
     let _, _, metho = SM.find m class_info.method_info in
@@ -206,8 +191,7 @@ module ClassInfo : ClassInfoType = struct
 
   let is_attribute m v class_info =
     try
-      find_variable_type m v class_info
-      |> ignore;
+      find_variable_type m v class_info |> ignore;
       false
     with Not_found -> true
 
@@ -230,124 +214,95 @@ module ClassInfo : ClassInfoType = struct
   let get_methods class_info =
     SM.fold
       (fun method_name (orig, index, _) acc ->
-        (index, orig ^ "_" ^ method_name) :: acc
-      )
-      class_info.method_info
-      []
-    |> List.sort compare
-    |> List.map snd
+        (index, orig ^ "_" ^ method_name) :: acc)
+      class_info.method_info []
+    |> List.sort compare |> List.map snd
 
   let get_attributes class_info =
     SM.fold
       (fun attribute_name l acc ->
         List.fold_right
-          (fun (orig, index, t) acc ->
-            (index, attribute_name, orig, t) :: acc)
-          l
-          acc
-      )
-      class_info.attribute_info
-      []
+          (fun (orig, index, t) acc -> (index, attribute_name, orig, t) :: acc)
+          l acc)
+      class_info.attribute_info []
     |> List.sort compare
-    |> List.map (fun (_, attribute_name, orig, t) -> (orig ^ "_" ^ attribute_name, t))
+    |> List.map (fun (_, attribute_name, orig, t) ->
+        (orig ^ "_" ^ attribute_name, t))
 end
 
 (** [class_infos] is a hash table from the name of a class to a [class_info]. *)
 let class_infos = Hashtbl.create 57
 
-(** [init_class_infos p] fills the [class_infos] hash table using the classes defined in [p]. *)
+(** [init_class_infos p] fills the [class_infos] hash table using the classes
+    defined in [p]. *)
 let init_class_infos (p : TMJ.program) : unit =
-  let main =
-    {
-      extends = None;
-      attributes = [];
-      methods = []
-    }
-  in
-  ClassInfo.create p.name main p.defs
-  |> Hashtbl.add class_infos p.name;
-  (** For each class in the program [p] we create a [class_info] and we add it to
+  let main = { extends = None; attributes = []; methods = [] } in
+  ClassInfo.create p.name main p.defs |> Hashtbl.add class_infos p.name;
+  (* For each class in the program [p] we create a [class_info] and we add it to
       the hash table [class_infos]. *)
   List.iter
     (fun (class_name, clas) ->
       ClassInfo.create class_name clas p.defs
-      |> Hashtbl.add class_infos class_name
-    )
+      |> Hashtbl.add class_infos class_name)
     p.defs
 
-(** [get_class_info c] returns the [class_info] associated with class name [c]. *)
-let get_class_info (c : string) : ClassInfo.t =
-  Hashtbl.find class_infos c
+(** [get_class_info c] returns the [class_info] associated with class name [c].
+*)
+let get_class_info (c : string) : ClassInfo.t = Hashtbl.find class_infos c
 
-(** [constant2c out c] transpiles the constant [c] to C on the output channel [out]. *)
-let constant2c
-      out
-      (c : TMJ.constant)
-    : unit =
-
+(** [constant2c out c] transpiles the constant [c] to C on the output channel
+    [out]. *)
+let constant2c out (c : TMJ.constant) : unit =
   match c with
-  | ConstBool true  -> fprintf out "1"
+  | ConstBool true -> fprintf out "1"
   | ConstBool false -> fprintf out "0"
-  | ConstInt i      -> fprintf out "%ld" i
-  | ConstString s   -> fprintf out "\"%s\"" s
-  | ConstFloat f    -> fprintf out "%f" f
+  | ConstInt i -> fprintf out "%ld" i
+  | ConstString s -> fprintf out "\"%s\"" s
+  | ConstFloat f -> fprintf out "%f" f
 
-(** [lunop2c out op] transpiles the unary operator [op] to C on the output channel [out]. *)
-let lunop2c
-      out
-      (op : TMJ.lunop)
-    : unit =
+(** [lunop2c out op] transpiles the unary operator [op] to C on the output
+    channel [out]. *)
+let lunop2c out (op : TMJ.lunop) : unit =
   match op with
   | LUOpNot -> fprintf out "!"
   | LUOpSub -> fprintf out "-"
   | LUOpIncr -> fprintf out "++"
   | LUOpDecr -> fprintf out "--"
 
-(** [runop2c out op] transpiles the unary operator [op] to C on the output channel [out]. *)
-let runop2c
-      out
-      (op : TMJ.runop)
-    : unit =
-  match op with
-  | RUOpIncr -> fprintf out "++"
-  | RUOpDecr -> fprintf out "--"
+(** [runop2c out op] transpiles the unary operator [op] to C on the output
+    channel [out]. *)
+let runop2c out (op : TMJ.runop) : unit =
+  match op with RUOpIncr -> fprintf out "++" | RUOpDecr -> fprintf out "--"
 
-(** [binop2c out op] transpiles the binary operator [op] to C on the output channel [out]. *)
-let binop2c
-      out
-      (op : TMJ.binop)
-    : unit =
+(** [binop2c out op] transpiles the binary operator [op] to C on the output
+    channel [out]. *)
+let binop2c out (op : TMJ.binop) : unit =
   match op with
-  | OpAdd   -> fprintf out "+"
-  | OpSub   -> fprintf out "-"
-  | OpMul   -> fprintf out "*"
-  | OpDiv   -> fprintf out "/"
-  | OpRem   -> fprintf out "%%"
-  | OpLt    -> fprintf out "<"
-  | OpGt    -> fprintf out ">"
-  | OpEq   -> fprintf out "=="
-  | OpNotEq   -> fprintf out "!="
-  | OpLtEq   -> fprintf out "<="
-  | OpGtEq   -> fprintf out ">="
-  | OpAnd   -> fprintf out "&&"
-  | OpOr   -> fprintf out "||"
+  | OpAdd -> fprintf out "+"
+  | OpSub -> fprintf out "-"
+  | OpMul -> fprintf out "*"
+  | OpDiv -> fprintf out "/"
+  | OpRem -> fprintf out "%%"
+  | OpLt -> fprintf out "<"
+  | OpGt -> fprintf out ">"
+  | OpEq -> fprintf out "=="
+  | OpNotEq -> fprintf out "!="
+  | OpLtEq -> fprintf out "<="
+  | OpGtEq -> fprintf out ">="
+  | OpAnd -> fprintf out "&&"
+  | OpOr -> fprintf out "||"
   | OpBWAnd -> fprintf out "&"
-  | OpBWXOr  -> fprintf out "^"
-  | OpBWOr  -> fprintf out "|"
+  | OpBWXOr -> fprintf out "^"
+  | OpBWOr -> fprintf out "|"
 
-(** [funop2c out op] transpiles the function operator [op] to C on the output channel [out]. *)
-let funop2c
-      out
-      (op : TMJ.funop)
-    : unit =
-  match op with
-  | OpMod   -> fprintf out "__mod"
+(** [funop2c out op] transpiles the function operator [op] to C on the output
+    channel [out]. *)
+let funop2c out (op : TMJ.funop) : unit =
+  match op with OpMod -> fprintf out "__mod"
 
-(** [type2c out typ] transpiles the type [typ] to C on the output channel [out]. *)
-let type2c
-      out
-      (typ : TMJ.typ)
-    : unit =
+(** [type2c out typ] transpiles the type [typ] to C on the output channel [out].
+*)
+let type2c out (typ : TMJ.typ) : unit =
   match typ with
   | TypInt -> fprintf out "int"
   | TypBool -> fprintf out "int"
@@ -357,388 +312,254 @@ let type2c
   | TypIntArray -> fprintf out "struct %s*" !struct_array_name
   | Typ t -> fprintf out "struct %s*" t
 
-(** [cast out typ] transpiles the cast to [typ] to C on the output channel [out]. *)
-let cast
-      out
-      (typ : TMJ.typ)
-    : unit =
-  fprintf out "(%a)" type2c typ
+(** [cast out typ] transpiles the cast to [typ] to C on the output channel
+    [out]. *)
+let cast out (typ : TMJ.typ) : unit = fprintf out "(%a)" type2c typ
 
-(** [var2c m class_info v] transpiles the variable [v] in the context of [class_info] and method [m]
-    to C on the output channel [out].
-    We must distinguish between an attribute and a local variable or a parameter. *)
-let var2c
-      (method_name : string)
-      (class_info : ClassInfo.t)
-      out
-      (v : string)
-    : unit =
+(** [var2c m class_info v] transpiles the variable [v] in the context of
+    [class_info] and method [m] to C on the output channel [out]. We must
+    distinguish between an attribute and a local variable or a parameter. *)
+let var2c (method_name : string) (class_info : ClassInfo.t) out (v : string) :
+    unit =
   if ClassInfo.is_attribute method_name v class_info then
     let class_origin = ClassInfo.attribute_class_origin v class_info in
     fprintf out "this->%s_%s" class_origin v
   else fprintf out "%s" v
 
-(** [get_class typ] gets the class name of the the type [typ].
-    If no class type is associated with expression [e], [get_class]
-    returns the empty string. *)
+(** [get_class typ] gets the class name of the the type [typ]. If no class type
+    is associated with expression [e], [get_class] returns the empty string. *)
 let rec get_class (typ : TMJ.typ) : string =
-  match typ with
-    | Typ t -> t
-    | _ -> ""
+  match typ with Typ t -> t | _ -> ""
 
-(** [expr2c m class_info out e] transpiles the expression [e], in the context of method [m] and [class_info],
-    to C on the output channel [out]. *)
-let expr2c
-      (method_name : string)
-      (class_info : ClassInfo.t)
-      out
-      (expr : TMJ.expression)
-    : unit =
+(** [expr2c m class_info out e] transpiles the expression [e], in the context of
+    method [m] and [class_info], to C on the output channel [out]. *)
+let expr2c (method_name : string) (class_info : ClassInfo.t) out
+    (expr : TMJ.expression) : unit =
   let rec expr2c out e =
     match e.raw_expression with
-    | EConst const ->
-       fprintf out "%a" constant2c const
-
-    | EGetVar v ->
-       var2c method_name class_info out v
-
-    | EThis ->
-       fprintf out "this"
-
-    | EMethodCall (o, callee, args) ->
-       let clas = get_class o.typ in
-       let class_info = get_class_info clas in
-       let index = ClassInfo.vtable_index callee class_info in
-       let typ = ClassInfo.return_type callee class_info in
-       (match typ with 
-       | TypFloat -> fprintf out "({ struct %s* %s = %a; int %s = (int)(long)%s->vtable[%d](%s%a); *((float*)&%s); })"
-         clas
-         !name1
-         expr2c o
-         !name2
-         !name1
-         index
-         !name1
-         (prec_list comma expr2c) args
-         !name2
-       | _ -> fprintf out "({ struct %s* %s = %a; %a %s->vtable[%d](%s%a); })"
-         clas
-         !name1
-         expr2c o
-         cast typ
-         !name1
-         index
-         !name1
-         (prec_list comma expr2c) args)
-
+    | EConst const -> fprintf out "%a" constant2c const
+    | EGetVar v -> var2c method_name class_info out v
+    | EThis -> fprintf out "this"
+    | EMethodCall (o, callee, args) -> (
+        let clas = get_class o.typ in
+        let class_info = get_class_info clas in
+        let index = ClassInfo.vtable_index callee class_info in
+        let typ = ClassInfo.return_type callee class_info in
+        match typ with
+        | TypFloat ->
+            fprintf out
+              "({ struct %s* %s = %a; int %s = \
+               (int)(long)%s->vtable[%d](%s%a); *((float*)&%s); })"
+              clas !name1 expr2c o !name2 !name1 index !name1
+              (prec_list comma expr2c) args !name2
+        | _ ->
+            fprintf out "({ struct %s* %s = %a; %a %s->vtable[%d](%s%a); })"
+              clas !name1 expr2c o cast typ !name1 index !name1
+              (prec_list comma expr2c) args)
     | EIntArrayAlloc e ->
-       fprintf out "(void*)({ int %s = %a; \
-                    if (%s < 0) exit(1); \
-                    struct %s* res = tgc_alloc(({ extern tgc_t gc; &gc; }), sizeof(struct %s)); \
-                    res->array = (int*) tgc_calloc(({ extern tgc_t gc; &gc; }), %s, sizeof(int)); \
-                    res->length = %s; res; })"
-         !name1
-         expr2c e
-         !name1
-         !struct_array_name
-         !struct_array_name
-         !name1
-         !name1
-    
+        fprintf out
+          "(void*)({ int %s = %a; if (%s < 0) exit(1); struct %s* res = \
+           tgc_alloc(({ extern tgc_t gc; &gc; }), sizeof(struct %s)); \
+           res->array = (int*) tgc_calloc(({ extern tgc_t gc; &gc; }), %s, \
+           sizeof(int)); res->length = %s; res; })"
+          !name1 expr2c e !name1 !struct_array_name !struct_array_name !name1
+          !name1
     | EFloatArrayAlloc e ->
-       fprintf out "(void*)({ int %s = %a; \
-                    if (%s < 0) exit(1); \
-                    struct %s* res = tgc_alloc(({ extern tgc_t gc; &gc; }), sizeof(struct %s)); \
-                    res->array = (float*) tgc_calloc(({ extern tgc_t gc; &gc; }), %s, sizeof(float)); \
-                    res->length = %s; res; })"
-         !name1
-         expr2c e
-         !name1
-         !struct_array_name
-         !struct_array_name
-         !name1
-         !name1
-
+        fprintf out
+          "(void*)({ int %s = %a; if (%s < 0) exit(1); struct %s* res = \
+           tgc_alloc(({ extern tgc_t gc; &gc; }), sizeof(struct %s)); \
+           res->array = (float*) tgc_calloc(({ extern tgc_t gc; &gc; }), %s, \
+           sizeof(float)); res->length = %s; res; })"
+          !name1 expr2c e !name1 !struct_array_name !struct_array_name !name1
+          !name1
     | EObjectAlloc id ->
-       fprintf out "({ struct %s* res = tgc_calloc(({ extern tgc_t gc; &gc; }), 1, sizeof(*res)); \
-                    res->vtable = %s_vtable; \
-                    res; })"
-         id
-         id
-
-     | EArrayGet (ea, ei) ->
-       (match ea.typ with
-       | TypFloatArray ->
-         fprintf out "({ int %s = %a; \
-                  struct %s* %s = %a; \
-                  float res; \
-                  if (%s < 0 || %s >= %s->length) exit(1); \
-                  else res = ((float*)%s->array)[%s]; res; })"
-          !name1
-          expr2c ei
-          !struct_array_name
-          !name2
-          expr2c ea
-          !name1
-          !name1
-          !name2
-          !name2
-          !name1
-       | _ ->
-         fprintf out "({ int %s = %a; \
-                  struct %s* %s = %a; \
-                  int res; \
-                  if (%s < 0 || %s >= %s->length) exit(1); \
-                  else res = ((int*)%s->array)[%s]; res; })"
-          !name1
-          expr2c ei
-          !struct_array_name
-          !name2
-          expr2c ea
-          !name1
-          !name1
-          !name2
-          !name2
-          !name1)
-
-    | EArrayLength e ->
-       fprintf out "(%a)->length"
-         expr2c e
-
-    | ELUnOp (op, e) ->
-       fprintf out "%a(%a)"
-         lunop2c op
-         expr2c e
-
-    | ERUnOp (op, e) ->
-       fprintf out "(%a)%a"
-         expr2c e
-         runop2c op
-
+        fprintf out
+          "({ struct %s* res = tgc_calloc(({ extern tgc_t gc; &gc; }), 1, \
+           sizeof(*res)); res->vtable = %s_vtable; res; })"
+          id id
+    | EArrayGet (ea, ei) -> (
+        match ea.typ with
+        | TypFloatArray ->
+            fprintf out
+              "({ int %s = %a; struct %s* %s = %a; float res; if (%s < 0 || %s \
+               >= %s->length) exit(1); else res = ((float*)%s->array)[%s]; \
+               res; })"
+              !name1 expr2c ei !struct_array_name !name2 expr2c ea !name1 !name1
+              !name2 !name2 !name1
+        | _ ->
+            fprintf out
+              "({ int %s = %a; struct %s* %s = %a; int res; if (%s < 0 || %s \
+               >= %s->length) exit(1); else res = ((int*)%s->array)[%s]; res; \
+               })"
+              !name1 expr2c ei !struct_array_name !name2 expr2c ea !name1 !name1
+              !name2 !name2 !name1)
+    | EArrayLength e -> fprintf out "(%a)->length" expr2c e
+    | ELUnOp (op, e) -> fprintf out "%a(%a)" lunop2c op expr2c e
+    | ERUnOp (op, e) -> fprintf out "(%a)%a" expr2c e runop2c op
     | EBinOp (op, e1, e2) ->
-       fprintf out "(%a %a %a)"
-         expr2c e1
-         binop2c op
-         expr2c e2
-
+        fprintf out "(%a %a %a)" expr2c e1 binop2c op expr2c e2
     | EFunOp (op, e1, e2) ->
-       fprintf out "%a(%a, %a)"
-         funop2c op
-         expr2c e1
-         expr2c e2
-         
+        fprintf out "%a(%a, %a)" funop2c op expr2c e1 expr2c e2
   in
   expr2c out expr
 
-(** [instr2c m class_info out ins] transpiles the instruction [ins], in the context of method [m] and [class_info],
-    to C on the output channel [out]. *)
-let instr2c
-      (method_name : string)
-      (class_info : ClassInfo.t)
-      out
-      (ins : TMJ.instruction)
-    : unit =
+(** [instr2c m class_info out ins] transpiles the instruction [ins], in the
+    context of method [m] and [class_info], to C on the output channel [out]. *)
+let instr2c (method_name : string) (class_info : ClassInfo.t) out
+    (ins : TMJ.instruction) : unit =
   let rec instr2c out ins =
     match ins with
     | ISetVar (x, typ, e) ->
-       let x_class = get_class typ in
-       let e_class = get_class e.typ in
-       fprintf out "%a = %s%a;"
-         (var2c method_name class_info) x
-         (if x_class <> e_class then sprintf "(struct %s*) " x_class else "")
-         (expr2c method_name class_info) e
-
-    | IArraySet (id, ei, ev) ->
-       (match ev.typ with
-       | TypFloat -> fprintf out "((float*)(%a)->array)[%a] = %a;"
-         (var2c method_name class_info) id
-         (expr2c method_name class_info) ei
-         (expr2c method_name class_info) ev
-       | _ -> fprintf out "((int*)(%a)->array)[%a] = %a;"
-         (var2c method_name class_info) id
-         (expr2c method_name class_info) ei
-         (expr2c method_name class_info) ev)
-
+        let x_class = get_class typ in
+        let e_class = get_class e.typ in
+        fprintf out "%a = %s%a;"
+          (var2c method_name class_info)
+          x
+          (if x_class <> e_class then sprintf "(struct %s*) " x_class else "")
+          (expr2c method_name class_info)
+          e
+    | IArraySet (id, ei, ev) -> (
+        match ev.typ with
+        | TypFloat ->
+            fprintf out "((float*)(%a)->array)[%a] = %a;"
+              (var2c method_name class_info)
+              id
+              (expr2c method_name class_info)
+              ei
+              (expr2c method_name class_info)
+              ev
+        | _ ->
+            fprintf out "((int*)(%a)->array)[%a] = %a;"
+              (var2c method_name class_info)
+              id
+              (expr2c method_name class_info)
+              ei
+              (expr2c method_name class_info)
+              ev)
     | IIf (c, i1, i2) ->
-       fprintf out "if (%a) %a%telse %a"
-         (expr2c method_name class_info) c
-         instr2c i1
-         nl
-         instr2c i2
-
+        fprintf out "if (%a) %a%telse %a"
+          (expr2c method_name class_info)
+          c instr2c i1 nl instr2c i2
     | IWhile (c, i) ->
-       fprintf out "while (%a) %a"
-         (expr2c method_name class_info) c
-         instr2c i
-    
+        fprintf out "while (%a) %a" (expr2c method_name class_info) c instr2c i
     | IDoWhile (i, c) ->
-       fprintf out "do %a while (%a);"
-         instr2c i
-         (expr2c method_name class_info) c
-
+        fprintf out "do %a while (%a);" instr2c i
+          (expr2c method_name class_info)
+          c
     | IFor (id1, e1, e2, e3, i3) ->
-       fprintf out "for (%s = %a; %a; %a) %a"
-         id1
-         (expr2c method_name class_info) e1
-         (expr2c method_name class_info) e2
-         (expr2c method_name class_info) e3
-         instr2c i3
-
-    | IContinue ->
-       fprintf out "continue;"
-
-    | IExpr e ->
-       fprintf out "%a;"
-         (expr2c method_name class_info) e
-
+        fprintf out "for (%s = %a; %a; %a) %a" id1
+          (expr2c method_name class_info)
+          e1
+          (expr2c method_name class_info)
+          e2
+          (expr2c method_name class_info)
+          e3 instr2c i3
+    | IContinue -> fprintf out "continue;"
+    | IExpr e -> fprintf out "%a;" (expr2c method_name class_info) e
     | IBlock is ->
-       fprintf out "{%a%t}"
-         (indent indentation (sep_list nl instr2c)) is
-         nl
-
-    | ISyso e ->
-      (match e.typ with
-        | TypFloat -> fprintf out "printf(\"%%g\\n\", (double)%a);" (* %g to trim the excess zeros for float (thanks to the runtime test) *)
-         (expr2c method_name class_info) e
-        | TypString -> fprintf out "printf(\"%%s\\n\", %a);"
-         (expr2c method_name class_info) e
-        | _ -> fprintf out "printf(\"%%d\\n\", %a);"
-         (expr2c method_name class_info) e)
-
-    | IBreak ->
-       fprintf out "break;"
+        fprintf out "{%a%t}" (indent indentation (sep_list nl instr2c)) is nl
+    | ISyso e -> (
+        match e.typ with
+        | TypFloat ->
+            fprintf out "printf(\"%%g\\n\", (double)%a);"
+              (* %g to trim the excess zeros for float (thanks to the runtime test) *)
+              (expr2c method_name class_info)
+              e
+        | TypString ->
+            fprintf out "printf(\"%%s\\n\", %a);"
+              (expr2c method_name class_info)
+              e
+        | _ ->
+            fprintf out "printf(\"%%d\\n\", %a);"
+              (expr2c method_name class_info)
+              e)
+    | IBreak -> fprintf out "break;"
   in
   instr2c out ins
 
-(** [class_declaration2c out c] transpiles the name of a class [c] to a C structure declaration
-    on the output channel [out]. *)
-let class_declaration2c
-      out
-      (class_name : string)
-    : unit =
+(** [class_declaration2c out c] transpiles the name of a class [c] to a C
+    structure declaration on the output channel [out]. *)
+let class_declaration2c out (class_name : string) : unit =
   fprintf out "struct %s;" class_name
 
-(** [decl2c out (id, t)] transpiles the declaration [(id, t)] to C on the output channel [out]. *)
-let decl2c
-      out
-      ((id, t) : string * TMJ.typ)
-    : unit =
-  fprintf out "%a %s"
-    type2c t
-    id
+(** [decl2c out (id, t)] transpiles the declaration [(id, t)] to C on the output
+    channel [out]. *)
+let decl2c out ((id, t) : string * TMJ.typ) : unit =
+  fprintf out "%a %s" type2c t id
 
-(** [method_declaration2c out (name, c)] transpiles all the declarations of the methods of the class [name] with type [c]
-    to C on the output channel [out]. *)
-let method_declaration2c
-      out
-      ((class_name, clas) : string * TMJ.clas)
-    : unit =
-  let method_declaration2c
-        out
-        ((method_name, m) : string * TMJ.metho)
-      : unit =
-    fprintf out "void* %s_%s(struct %s* this%a);"
-      class_name
-      method_name
-      class_name
-      (prec_list comma decl2c)
-      m.formals
+(** [method_declaration2c out (name, c)] transpiles all the declarations of the
+    methods of the class [name] with type [c] to C on the output channel [out].
+*)
+let method_declaration2c out ((class_name, clas) : string * TMJ.clas) : unit =
+  let method_declaration2c out ((method_name, m) : string * TMJ.metho) : unit =
+    fprintf out "void* %s_%s(struct %s* this%a);" class_name method_name
+      class_name (prec_list comma decl2c) m.formals
   in
-  fprintf out "%a"
-    (sep_list nl method_declaration2c)
-    clas.methods
+  fprintf out "%a" (sep_list nl method_declaration2c) clas.methods
 
-(** [class_definition2c out (name, c)] defines the C structure representing the class [name] with type [c] on the output channel [out]. *)
-let class_definition2c
-      out
-      ((class_name, clas) : string * TMJ.clas)
-    : unit =
-  let field_names =
-    get_class_info class_name
-    |> ClassInfo.get_attributes
+(** [class_definition2c out (name, c)] defines the C structure representing the
+    class [name] with type [c] on the output channel [out]. *)
+let class_definition2c out ((class_name, clas) : string * TMJ.clas) : unit =
+  let field_names = get_class_info class_name |> ClassInfo.get_attributes in
+  let field2c out ((name, t) : string * TMJ.typ) : unit =
+    fprintf out "%a %s" type2c t name
   in
-  let field2c
-        out
-        ((name, t) : string * TMJ.typ)
-      : unit =
-    fprintf out "%a %s"
-      type2c t
-      name
-  in
-  fprintf out "struct %s {%t%a\n};"
-    class_name
+  fprintf out "struct %s {%t%a\n};" class_name
     (indent_t indentation (fun out -> fprintf out "void* (**vtable)();"))
-    (term_list semicolon (indent indentation field2c)) field_names
+    (term_list semicolon (indent indentation field2c))
+    field_names
 
-(** [method_definition2c out (name, c)] transpiles all the definitions of the methods of the class [name] with type [c]
-    to C on the output channel [out]. *)
-let method_definition2c
-      out
-      ((class_name, clas) : string * TMJ.clas)
-    : unit =
+(** [method_definition2c out (name, c)] transpiles all the definitions of the
+    methods of the class [name] with type [c] to C on the output channel [out].
+*)
+let method_definition2c out ((class_name, clas) : string * TMJ.clas) : unit =
   let class_info = get_class_info class_name in
   let method_definition out (method_name, m) =
     let return2c out e =
       match e.typ with
-        | TypFloat -> fprintf out "return (void*)(*((int*)&%a));"
-            (expr2c method_name class_info) e
-        | _ ->
-          fprintf out "return (void*)(%a);"
-            (expr2c method_name class_info) e
+      | TypFloat ->
+          fprintf out "return (void*)(*((int*)&%a));"
+            (expr2c method_name class_info)
+            e
+      | _ -> fprintf out "return (void*)(%a);" (expr2c method_name class_info) e
     in
-    fprintf out "void* %s_%s(struct %s* this%a) {%a%a%a\n}"
-      class_name
-      method_name
-      class_name
-      (prec_list comma decl2c) m.formals
+    fprintf out "void* %s_%s(struct %s* this%a) {%a%a%a\n}" class_name
+      method_name class_name (prec_list comma decl2c) m.formals
       (term_list semicolon (indent indentation decl2c))
       m.locals
-      (list (indent indentation (instr2c method_name class_info))) m.body
-      (indent indentation return2c) m.return
+      (list (indent indentation (instr2c method_name class_info)))
+      m.body
+      (indent indentation return2c)
+      m.return
   in
-  fprintf out "%a"
-    (sep_list nl method_definition)
-    clas.methods
+  fprintf out "%a" (sep_list nl method_definition) clas.methods
 
-(** [vtable_definition2c out c] creates the virtual tables for all the methods of class [c]
-    on the output channel [out]. *)
-let vtable_definition2c
-      out
-      class_name
-    : unit =
+(** [vtable_definition2c out c] creates the virtual tables for all the methods
+    of class [c] on the output channel [out]. *)
+let vtable_definition2c out class_name : unit =
   let class_info = get_class_info class_name in
-  fprintf out "void* (*%s_vtable[])() = { %a };"
-    class_name
+  fprintf out "void* (*%s_vtable[])() = { %a };" class_name
     (sep_list comma print_string)
     (ClassInfo.get_methods class_info)
 
 (** [all_variables p] returns the list of all the variables of program [p]. *)
 let all_variables (p : TMJ.program) : string list =
   let variables_from_method (m : TMJ.metho) : string list =
-    List.(map fst m.formals
-          @ map fst m.locals)
+    List.(map fst m.formals @ map fst m.locals)
   in
-  p.main_args ::
-    List.(map
-            (fun (_, clas) ->
-              map fst clas.attributes
-              @ (map snd clas.methods
-                 |> map variables_from_method
-                 |> flatten))
-            p.defs
-          |> flatten)
+  p.main_args
+  :: List.(
+       map
+         (fun (_, clas) ->
+           map fst clas.attributes
+           @ (map snd clas.methods |> map variables_from_method |> flatten))
+         p.defs
+       |> flatten)
 
 let program2c out (p : TMJ.program) : unit =
   init_class_infos p;
-  let all_class_names =
-    List.map fst p.defs
-  in
-  let rec variant s l =
-    if List.mem s l then
-      variant (s ^ "_") l
-    else
-      s
-  in
+  let all_class_names = List.map fst p.defs in
+  let rec variant s l = if List.mem s l then variant (s ^ "_") l else s in
   struct_array_name := variant "array" all_class_names;
   let all_variables = all_variables p in
   name1 := variant "tmp1" all_variables;
@@ -749,46 +570,32 @@ let program2c out (p : TMJ.program) : unit =
      #include \"tgc.h\"\n\
      #pragma GCC diagnostic ignored \"-Wpointer-to-int-cast\"\n\
      #pragma GCC diagnostic ignored \"-Wint-to-pointer-cast\"\n\
-    struct %s { void* array; int length; };\n\
+     struct %s { void* array; int length; };\n\
      tgc_t gc;\n\
      int __mod(int a, int b) {\n\
-     \ \ int r = a %% b;\n\
-     \ \ if (r < 0) r += (b > 0 ? b : -b);\n\
-     \ \ return r;\n\
+    \  int r = a %% b;\n\
+    \  if (r < 0) r += (b > 0 ? b : -b);\n\
+    \  return r;\n\
      }\n\
-     %a\
-     %a\
-     %a\
-     %a\
-     %a\
-     int main(int argc, char *argv[]) {\
-     %a\
-     %a\
-     %a\n\
+     %a%a%a%a%aint main(int argc, char *argv[]) {%a%a%a\n\
      %a\n\
      }\n"
     !struct_array_name
-
     (term_list nl class_declaration2c)
     all_class_names
-
     (term_list nl method_declaration2c)
     (List.filter (fun (_, c) -> c.methods <> []) p.defs)
-
     (term_list nl class_definition2c)
     p.defs
-
     (term_list nl vtable_definition2c)
     all_class_names
-
     (term_list nl method_definition2c)
     (List.filter (fun (_, c) -> c.methods <> []) p.defs)
-
-    (indent indentation print_string) "tgc_start(&gc, &argc);"
-
+    (indent indentation print_string)
+    "tgc_start(&gc, &argc);"
     (list (indent indentation (instr2c "main" (get_class_info p.name))))
     p.main
-
-    (indent indentation print_string) "tgc_stop(&gc);"
-
-    (indent indentation print_string) "return 0;"
+    (indent indentation print_string)
+    "tgc_stop(&gc);"
+    (indent indentation print_string)
+    "return 0;"
