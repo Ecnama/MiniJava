@@ -567,6 +567,9 @@ let instr2c
          (expr2c method_name class_info) e3
          instr2c i3
 
+    | IContinue ->
+       fprintf out "continue;"
+
     | IBlock is ->
        fprintf out "{%a%t}"
          (indent indentation (sep_list nl instr2c)) is

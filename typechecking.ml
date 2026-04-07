@@ -323,6 +323,9 @@ let rec typecheck_instruction (cenv : class_env) (venv : variable_env) (vinit : 
       typecheck_instruction cenv venv vinit instanceof i3
     in
     (TMJ.IFor (Location.content id1, e1', e2', Location.content id2, e3', i3'), vinit')
+  
+    | IContinue ->
+      (TMJ.IContinue, vinit)
 
   | ISyso e ->
      let e' = typecheck_expression cenv venv vinit instanceof e in

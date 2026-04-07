@@ -126,6 +126,8 @@ let print_token show_loc out = function
      fprintf out "BREAK"
   | EOF ->
      fprintf out "EOF"
+  | CONTINUE ->
+     fprintf out "CONTINUE"
 
 let print out lexbuf show_loc =
   let token = ref (Lexer.get_token lexbuf) in

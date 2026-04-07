@@ -15,7 +15,7 @@
 %token LPAREN RPAREN LBRACKET RBRACKET LBRACE RBRACE
 %token THIS NEW DOT LENGTH
 %token SYSO
-%token IF ELSE DO WHILE FOR NOELSE BREAK
+%token IF ELSE DO WHILE FOR NOELSE BREAK CONTINUE
 %token EOF
 
 %nonassoc NOELSE
@@ -219,6 +219,9 @@ instruction:
 
 | FOR LPAREN id1 = IDENT ASSIGN e1 = expression SEMICOLON e2 = expression SEMICOLON id2 = IDENT ASSIGN e3 = expression RPAREN i3 = instruction
    { IFor (id1, e1, e2, id2, e3, i3) }
+
+| CONTINUE SEMICOLON
+   { IContinue }
 
 block:
 | LBRACE is = list(instruction) RBRACE

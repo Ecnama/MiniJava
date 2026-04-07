@@ -55,6 +55,7 @@ and instruction =
   | IWhile of expression * instruction
   | IDoWhile of instruction * expression
   | IFor of identifier * expression * expression * identifier * expression * instruction
+  | IContinue
   | ISyso of expression
   | ISetVar of identifier * typ * expression
   | IArraySet of identifier * expression * expression

@@ -241,6 +241,8 @@ let rec instr out = function
         id2
         expr e3
         instr i3
+  | IContinue ->
+      fprintf out "continue;"
   | IBlock is ->
      fprintf out "{%a%t}"
        (indent indentation (sep_list nl instr)) is

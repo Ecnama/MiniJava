@@ -60,6 +60,7 @@ and instruction =
   | IWhile of expression * instruction (** [IWile (e, ins)] represents the instruction [while (e) ins]. *)
   | IDoWhile of instruction * expression (** [IWile (ins, e)] represents the instruction [do ins while (e)]. *)
   | IFor of identifier * expression * expression * identifier * expression * instruction (** [IFor (i1, e1, e2, i2, e3, ins)] represents the instruction [for (i1 = e1; e2; i2 = e3) ins]. *)
+  | IContinue (** [IContinue] represents the instruction [continue;]. *)
   | ISyso of expression (** [ISyso e] represents the instruction [System.out.println(e);]. *)
   | ISetVar of identifier * expression (** [ISetVar (id, e)] represents the instruction [id = e;]. *)
   | IArraySet of identifier * expression * expression (** [IArraySet (id, e1, e2)] represents the instruction [id[e1] = e2;]. *)

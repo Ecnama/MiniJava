@@ -69,6 +69,7 @@ rule get_token = parse
   | "void"    { VOID }
   | "main"    { MAIN }
   | "return"  { RETURN }
+  | "continue"{ CONTINUE }
   | "String"  { STRING }
   | "extends" { EXTENDS }
   | "new"     { NEW }

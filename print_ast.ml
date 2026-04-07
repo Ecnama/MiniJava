@@ -274,6 +274,8 @@ let rec print_instruction prefix out i =
        prefix'
        branch_end
        (print_instruction prefix') i3
+  | IContinue ->
+     fprintf out "IContinue"
   | ISetVar (id, e) ->
      fprintf out "ISetVar\n%s%s%a\n%s%s%a"
        prefix'
