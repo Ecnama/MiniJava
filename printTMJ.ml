@@ -308,7 +308,7 @@ let print_program out (p : TMJ.program) : unit =
        (fun out ->
          fprintf out "public static void main(String[] %s) {%a%t}"
            p.main_args
-           (indent indentation instr) p.main
+           (list (indent indentation instr)) p.main
            nl))
     nl
     nl

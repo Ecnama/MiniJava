@@ -57,10 +57,10 @@ main_class:
    LBRACE
    PUBLIC STATIC VOID MAIN LPAREN STRING LBRACKET RBRACKET a = IDENT RPAREN
    LBRACE
-   i = instruction
+   li = list(instruction)
    RBRACE
    RBRACE
-   { (c, a, i) }
+   { (c, a, li) }
 
 defs:
 | c = list(clas)

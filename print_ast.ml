@@ -413,4 +413,4 @@ let print out p show_loc =
     print_identifier p.main_args
     prefix
     branch_end
-    (print_instruction_list (prefix ^ " ")) [p.main]
+    (print_instruction_list (prefix ^ " ")) p.main

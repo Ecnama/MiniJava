@@ -548,6 +548,14 @@ let typecheck_program (p : program) : TMJ.program =
     name = Location.content p.name;
     defs = defs';
     main_args = Location.content p.main_args;
-    main      = fst (typecheck_instruction cenv venv S.empty instanceof p.main)
-  }
+    main      = List.fold_left
+          (fun (acc, vinit) inst ->
+          let inst, vinit = typecheck_instruction cenv venv vinit instanceof inst in
+          (inst :: acc, vinit))
+          ([], S.empty)
+          p.main
+          |> fst
+          |> List.rev
+   }
+    (*fst (typecheck_instruction cenv venv S.empty instanceof p.main)*)
   
