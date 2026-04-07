@@ -176,14 +176,22 @@ and typecheck_expression (cenv : class_env) (venv : variable_env) (vinit : S.t)
        error v (sprintf "Variable %s has not been initialized" v');
      mke (TMJ.EGetVar (Location.content v)) typ
 
-  | EUnOp (op, e) ->
+  | ELUnOp (op, e) ->
       let expected, returned =
         match op with
-        | UOpNot -> TypBool, TypBool
-        | UOpSub -> TypInt, TypInt
+        | LUOpNot -> TypBool, TypBool
+        | LUOpSub | LUOpIncr | LUOpDecr -> TypInt, TypInt
       in
       let e' = typecheck_expression_expecting cenv venv vinit instanceof expected e in
-      mke (TMJ.EUnOp (op, e')) returned
+      mke (TMJ.ELUnOp (op, e')) returned
+  
+  | ERUnOp (op, e) ->
+      let expected, returned =
+        match op with
+        | RUOpIncr | RUOpDecr -> TypInt, TypInt
+      in
+      let e' = typecheck_expression_expecting cenv venv vinit instanceof expected e in
+      mke (TMJ.ERUnOp (op, e')) returned
 
   | EBinOp (op, e1, e2) ->
       let expected, returned =
@@ -318,18 +326,20 @@ let rec typecheck_instruction (cenv : class_env) (venv : variable_env) (vinit : 
       let cond' = typecheck_expression_expecting cenv venv vinit instanceof TypBool cond in
       (TMJ.IDoWhile (ibody', cond'), vinit)
 
-  | IFor (id1, e1, e2, id2, e3, i3) ->
+  | IFor (id1, e1, e2, e3, i3) ->
     let t1 = vlookup id1 venv in
     let e1' = typecheck_expression_expecting cenv venv vinit instanceof t1 e1 in
     let vinit = S.add (Location.content id1) vinit in
     let e2' = typecheck_expression_expecting cenv venv vinit instanceof TypBool e2 in
-    let t2 = vlookup id2 venv in
-    let e3' = typecheck_expression_expecting cenv venv vinit instanceof t2 e3 in
-    let vinit = S.add (Location.content id2) vinit in
+    let e3' = typecheck_expression cenv venv vinit instanceof e3 in
     let i3', vinit' =
       typecheck_instruction cenv venv vinit instanceof i3
     in
-    (TMJ.IFor (Location.content id1, e1', e2', Location.content id2, e3', i3'), vinit')
+    (TMJ.IFor (Location.content id1, e1', e2', e3', i3'), vinit')
+
+  | IExpr e ->
+    let e' = typecheck_expression cenv venv vinit instanceof e in
+    (TMJ.IExpr e', vinit)
   
     | IContinue ->
       (TMJ.IContinue, vinit)

@@ -13,10 +13,13 @@ class Main {
         int[] a;
         int i;
         a = new int[n];
-        for (i = 0; i < n; i = i + 1) {
+        for (i = 0; i < n; i++) {
             a[i] = i;
             if (i == 10) {
                 break;
+            }
+            if (i % 2 == 0) {
+                i--;
             }
         }
         return a;

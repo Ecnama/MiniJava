@@ -1,5 +1,6 @@
-(** This is the same abstract syntax tree as in [LMJ.mli] but without position informations.
-    After typechecking, we don't need to give feedbacks to the user. *)
+(** This is the same abstract syntax tree as in [LMJ.mli] but without position
+    informations. After typechecking, we don't need to give feedbacks to the
+    user. *)
 
 type identifier = string
 
@@ -8,7 +9,8 @@ type expression = { raw_expression : raw_expression; typ : typ }
 and raw_expression =
   | EConst of constant
   | EGetVar of identifier
-  | EUnOp of unop * expression
+  | ELUnOp of lunop * expression
+  | ERUnOp of runop * expression
   | EBinOp of binop * expression * expression
   | EFunOp of funop * expression * expression
   | EMethodCall of expression * identifier * expression list
@@ -24,9 +26,8 @@ and constant = LMJ.constant =
   | ConstInt of int32
   | ConstFloat of float
   | ConstString of string
-  
-and funop = LMJ.funop =
-  | OpMod
+
+and funop = LMJ.funop = OpMod
 
 and binop = LMJ.binop =
   | OpAdd
@@ -46,16 +47,16 @@ and binop = LMJ.binop =
   | OpLtEq
   | OpGtEq
 
-and unop = LMJ.unop = 
-  | UOpNot
-  | UOpSub
+and lunop = LMJ.lunop = LUOpNot | LUOpSub | LUOpIncr | LUOpDecr
+and runop = LMJ.runop = RUOpIncr | RUOpDecr
 
 and instruction =
   | IBlock of instruction list
   | IIf of expression * instruction * instruction
   | IWhile of expression * instruction
   | IDoWhile of instruction * expression
-  | IFor of identifier * expression * expression * identifier * expression * instruction
+  | IFor of identifier * expression * expression * expression * instruction
+  | IExpr of expression
   | IContinue
   | ISyso of expression
   | ISetVar of identifier * typ * expression
@@ -72,22 +73,22 @@ and typ =
   | Typ of identifier
 
 and metho = {
-    formals: (identifier * typ) list;
-    result: typ;
-    locals: (identifier * typ) list;
-    body: instruction list;
-    return: expression
-  }
+  formals : (identifier * typ) list;
+  result : typ;
+  locals : (identifier * typ) list;
+  body : instruction list;
+  return : expression;
+}
 
 and clas = {
-    extends: identifier option;
-    attributes: (identifier * typ) list;
-    methods: (identifier * metho) list
-  }
+  extends : identifier option;
+  attributes : (identifier * typ) list;
+  methods : (identifier * metho) list;
+}
 
 and program = {
-    name: identifier;
-    defs: (identifier * clas) list;
-    main_args: identifier;
-    main: instruction list
-  }
+  name : identifier;
+  defs : (identifier * clas) list;
+  main_args : identifier;
+  main : instruction list;
+}

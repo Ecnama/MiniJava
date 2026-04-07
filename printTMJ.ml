@@ -17,12 +17,23 @@ let constant out = function
   | ConstFloat f ->
      fprintf out "%f" f
 
-(** [unop out op] prints the unary operator [op] on the output channel [out]. *)
-let unop out = function
-  | UOpNot ->
+(** [lunop out op] prints the unary operator [op] on the output channel [out]. *)
+let lunop out = function
+  | LUOpNot ->
      fprintf out "!"
-  | UOpSub ->
+  | LUOpSub ->
      fprintf out "-"
+  | LUOpIncr ->
+     fprintf out "++"
+  | LUOpDecr ->
+     fprintf out "--"
+
+(** [runop out op] prints the unary operator [op] on the output channel [out]. *)
+let runop out = function
+  | RUOpIncr ->
+     fprintf out "++"
+  | RUOpDecr ->
+     fprintf out "--"
 
 (** [binop out op] prints the binary operator [op] on the output channel [out]. *)
 let binop out = function
@@ -95,6 +106,10 @@ let rec expr0 out e = match e.raw_expression with
   | EObjectAlloc id ->
      fprintf out "new %s()"
        id
+  | ERUnOp ((RUOpIncr | RUOpDecr) as op, e) ->
+     fprintf out "%a%a"
+       expr0 e
+       runop op
   | _ ->
      fprintf out "(%a)"
        expr e
@@ -110,9 +125,9 @@ and expr1 out e = match e.raw_expression with
      expr0 out e
 
 and expr2 out e = match e.raw_expression with
-  | EUnOp (UOpNot as op, e) ->
+  | ELUnOp (LUOpNot as op, e) ->
      fprintf out "%a%a"
-       unop op
+       lunop op
        expr2 e
   | _ ->
      expr1 out e
@@ -137,9 +152,9 @@ and expr4 out e = match e.raw_expression with
        expr4 e1
        binop op
        expr3 e2
-  | EUnOp (UOpSub as op, e) ->
+  | ELUnOp ((LUOpSub | LUOpIncr | LUOpDecr) as op, e) ->
      fprintf out "%a%a"
-       unop op
+       lunop op
        expr2 e
   | _ ->
      expr3 out e
@@ -235,16 +250,18 @@ let rec instr out = function
       fprintf out "do %a while (%a);"
         instr i
         expr c
-  | IFor (id1, e1, e2, id2, e3, i3) ->
-      fprintf out "for (%s=%a; %a; %s=%a) %a"
+  | IFor (id1, e1, e2, e3, i3) ->
+      fprintf out "for (%s=%a; %a; %a) %a"
         id1
         expr e1
         expr e2
-        id2
-        expr e3
+         expr e3
         instr i3
   | IContinue ->
       fprintf out "continue;"
+   | IExpr e ->
+         fprintf out "%a;"
+            expr e
   | IBlock is ->
      fprintf out "{%a%t}"
        (indent indentation (sep_list nl instr)) is

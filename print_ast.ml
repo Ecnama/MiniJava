@@ -68,12 +68,23 @@ let print_constant out = function
   | ConstFloat f ->
      fprintf out "ConstFloat %f" f
 
-(** [print_unop out op] prints the unary operator [op] on the output channel [out]. *)
-let print_unop out = function
-  | UOpNot ->
-     fprintf out "UOpNot"
-  | UOpSub ->
-     fprintf out "UOpSub"
+(** [print_lunop out op] prints the unary operator [op] on the output channel [out]. *)
+let print_lunop out = function
+  | LUOpNot ->
+     fprintf out "LUOpNot"
+  | LUOpSub ->
+     fprintf out "LUOpSub"
+  | LUOpIncr ->
+     fprintf out "LUOpIncr"
+  | LUOpDecr ->
+     fprintf out "LUOpDecr"
+
+(** [print_runop out op] prints the unary operator [op] on the output channel [out]. *)
+let print_runop out = function
+  | RUOpIncr ->
+     fprintf out "RUOpIncr"
+  | RUOpDecr ->
+     fprintf out "RUOpDecr"
 
 (** [print_binop out op] prints the binary operator [op] on the output channel [out]. *)
 let print_binop out = function
@@ -132,8 +143,15 @@ and print_raw_expression prefix out e pos =
      print_position out pos
   | EGetVar id ->
      fprintf out "EGetVar %a" print_identifier id
-  | EUnOp (op, e) ->
-     fprintf out "EUnOp %a" print_unop op;
+  | ELUnOp (op, e) ->
+     fprintf out "EUnOp %a" print_lunop op;
+     print_position out pos;
+     fprintf out "\n%s%s%a"
+       prefix'
+       branch_end
+       (print_expression prefix') e
+  | ERUnOp (op, e) ->
+     fprintf out "EUnOp %a" print_runop op;
      print_position out pos;
      fprintf out "\n%s%s%a"
        prefix'
@@ -256,8 +274,8 @@ let rec print_instruction prefix out i =
        prefix'
        branch_end
        (print_expression prefix') e
-  | IFor (id1, e1, e2, id2, e3, i3) ->
-     fprintf out "IFor\n%s%s%a\n%s%s%a\n%s%s%a\n%s%s%a\n%s%s%a\n%s%s%a"
+      | IFor (id1, e1, e2, e3, i3) ->
+       fprintf out "IFor\n%s%s%a\n%s%s%a\n%s%s%a\n%s%s%a\n%s%s%a"
        prefix'
        branch
        print_identifier id1
@@ -269,15 +287,17 @@ let rec print_instruction prefix out i =
        (print_expression (prefix' ^ pipe)) e2
        prefix'
        branch
-       print_identifier id2
-       prefix'
-       branch
-       (print_expression prefix') e3
+         (print_expression (prefix' ^ pipe)) e3
        prefix'
        branch_end
        (print_instruction prefix') i3
   | IContinue ->
      fprintf out "IContinue"
+  | IExpr e ->
+     fprintf out "IExpr\n%s%s%a"
+       prefix'
+       branch_end
+       (print_expression prefix') e
   | ISetVar (id, e) ->
      fprintf out "ISetVar\n%s%s%a\n%s%s%a"
        prefix'

@@ -292,14 +292,25 @@ let constant2c
   | ConstString s   -> fprintf out "\"%s\"" s
   | ConstFloat f    -> fprintf out "%f" f
 
-(** [unop2c out op] transpiles the unary operator [op] to C on the output channel [out]. *)
-let unop2c
+(** [lunop2c out op] transpiles the unary operator [op] to C on the output channel [out]. *)
+let lunop2c
       out
-      (op : TMJ.unop)
+      (op : TMJ.lunop)
     : unit =
   match op with
-  | UOpNot -> fprintf out "!"
-  | UOpSub -> fprintf out "-"
+  | LUOpNot -> fprintf out "!"
+  | LUOpSub -> fprintf out "-"
+  | LUOpIncr -> fprintf out "++"
+  | LUOpDecr -> fprintf out "--"
+
+(** [runop2c out op] transpiles the unary operator [op] to C on the output channel [out]. *)
+let runop2c
+      out
+      (op : TMJ.runop)
+    : unit =
+  match op with
+  | RUOpIncr -> fprintf out "++"
+  | RUOpDecr -> fprintf out "--"
 
 (** [binop2c out op] transpiles the binary operator [op] to C on the output channel [out]. *)
 let binop2c
@@ -494,10 +505,15 @@ let expr2c
        fprintf out "(%a)->length"
          expr2c e
 
-    | EUnOp (op, e) ->
+    | ELUnOp (op, e) ->
        fprintf out "%a(%a)"
-         unop2c op
+         lunop2c op
          expr2c e
+
+    | ERUnOp (op, e) ->
+       fprintf out "(%a)%a"
+         expr2c e
+         runop2c op
 
     | EBinOp (op, e1, e2) ->
        fprintf out "(%a %a %a)"
@@ -560,17 +576,20 @@ let instr2c
          instr2c i
          (expr2c method_name class_info) c
 
-    | IFor (id1, e1, e2, id2, e3, i3) ->
-       fprintf out "for (%s = %a; %a; %s = %a) %a"
+    | IFor (id1, e1, e2, e3, i3) ->
+       fprintf out "for (%s = %a; %a; %a) %a"
          id1
          (expr2c method_name class_info) e1
          (expr2c method_name class_info) e2
-         id2
          (expr2c method_name class_info) e3
          instr2c i3
 
     | IContinue ->
        fprintf out "continue;"
+
+    | IExpr e ->
+       fprintf out "%a;"
+         (expr2c method_name class_info) e
 
     | IBlock is ->
        fprintf out "{%a%t}"

@@ -50,6 +50,10 @@ let print_token show_loc out = function
      fprintf out "RETURN"
   | PLUS ->
      fprintf out "PLUS"
+  | INCR ->
+     fprintf out "INCR"
+  | DECR ->
+     fprintf out "DECR"
   | MINUS ->
      fprintf out "MINUS"
   | TIMES ->

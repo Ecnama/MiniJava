@@ -31,7 +31,9 @@ rule get_token = parse
   | space+    { get_token lexbuf }
   | "/*"      { comment lexbuf }
   | '+'       { PLUS }
+  | "++"      { INCR }
   | '-'       { MINUS }
+  | "--"      { DECR }
   | '*'       { TIMES }
   | '/'       { DIV }
   | '%'       { REM }

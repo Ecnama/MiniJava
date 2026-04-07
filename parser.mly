@@ -10,7 +10,7 @@
 %token INTEGER FLOAT BOOLEAN
 %token <string Location.t> IDENT
 %token CLASS PUBLIC STATIC VOID MAIN STRING EXTENDS RETURN
-%token PLUS MINUS TIMES DIV REM MOD BWAND BWOR BWXOR NOT EQ NOTEQ LTEQ GTEQ LT GT AND OR
+%token PLUS MINUS TIMES DIV REM MOD BWAND BWOR BWXOR NOT EQ NOTEQ LTEQ GTEQ LT GT AND OR INCR DECR
 %token COMMA SEMICOLON
 %token ASSIGN
 %token LPAREN RPAREN LBRACKET RBRACKET LBRACE RBRACE
@@ -31,7 +31,8 @@
 %nonassoc LT GT LTEQ GTEQ
 %left PLUS MINUS
 %left TIMES DIV REM MOD
-%nonassoc NOT
+%nonassoc NOT INCR DECR
+%nonassoc POSTFIX
 %nonassoc DOT LBRACKET
 
 %start program
@@ -136,6 +137,7 @@ raw_expression:
    { EConst (ConstBool b) }
 
 | id = IDENT
+   %prec POSTFIX
    { EGetVar id }
 
 | e1 = expression op = binop e2 = expression
@@ -165,12 +167,21 @@ raw_expression:
 | NEW id = IDENT LPAREN RPAREN
    { EObjectAlloc id }
 
-| op = unop e = expression
-   { EUnOp (op, e) }
+| op = lunop e = expression
+   { ELUnOp (op, e) }
 
-%inline unop:
-| NOT    { UOpNot }
-| MINUS  { UOpSub }
+| e = expression op = runop
+   { ERUnOp (op, e) }
+
+%inline lunop:
+| NOT    { LUOpNot }
+| MINUS  { LUOpSub }
+| INCR   { LUOpIncr }
+| DECR   { LUOpDecr }
+
+%inline runop:
+| INCR   { RUOpIncr }
+| DECR   { RUOpDecr }
 
 %inline binop:
 | PLUS   { OpAdd }
@@ -221,8 +232,11 @@ instruction:
 | DO i = instruction WHILE LPAREN c = expression RPAREN SEMICOLON
    { IDoWhile (i, c) }
 
-| FOR LPAREN id1 = IDENT ASSIGN e1 = expression SEMICOLON e2 = expression SEMICOLON id2 = IDENT ASSIGN e3 = expression RPAREN i3 = instruction
-   { IFor (id1, e1, e2, id2, e3, i3) }
+| FOR LPAREN id1 = IDENT ASSIGN e1 = expression SEMICOLON e2 = expression SEMICOLON e3 = expression RPAREN i3 = instruction
+   { IFor (id1, e1, e2, e3, i3) }
+
+| e = expression SEMICOLON
+   { IExpr e }
 
 | CONTINUE SEMICOLON
    { IContinue }

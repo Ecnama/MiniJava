@@ -13,7 +13,8 @@ type expression = raw_expression Location.t
 and raw_expression =
   | EConst of constant (** A integer, float, boolean or string constant. *)
   | EGetVar of identifier (** Get the value of a variable. *)
-  | EUnOp of unop * expression (** An unary operator. *)
+  | ELUnOp of lunop * expression (** An left unary operator. *)
+  | ERUnOp of runop * expression (** An right unary operator. *)
   | EBinOp of binop * expression * expression (** [EBinOp (op, e1, e2)] represents the expression [e1 op e2]. *)
   | EFunOp of funop * expression * expression (** [EFunOp (op, e1, e2)] represents the expression [e1 op e2] that has to be translated in C with a function. *)
   | EMethodCall of expression * identifier * expression list (** [EMethodCall (o, id, [p1, ..., pn])] represents the call [o.id(p1, ..., pn)]. *)
@@ -51,16 +52,23 @@ and binop =
   | OpLtEq  (** Binary operator [<=]. *)
   | OpGtEq  (** Binary operator [>=]. *)
 
-and unop = 
-  | UOpNot  (** Unary operator [!]. *)
-  | UOpSub  (** Unary operator [-]. *)
+and lunop = 
+  | LUOpNot  (** Unary operator [!]. *)
+  | LUOpSub  (** Unary operator [-]. *)
+  | LUOpIncr (** Unary operator [++]. *)
+  | LUOpDecr (** Unary operator [--]. *)
+
+and runop =
+  | RUOpIncr (** Unary operator [++]. *)
+  | RUOpDecr (** Unary operator [--]. *)
 
 and instruction =
   | IBlock of instruction list (** [IBlock [i1; i2; ...; in]] represents the instruction [{ i1 i2 ... in }]. *)
   | IIf of expression * instruction * instruction (** [IIf (e, i1, i2)] represents the instruction [if (e) i1 else i2]. *)
   | IWhile of expression * instruction (** [IWile (e, ins)] represents the instruction [while (e) ins]. *)
   | IDoWhile of instruction * expression (** [IWile (ins, e)] represents the instruction [do ins while (e)]. *)
-  | IFor of identifier * expression * expression * identifier * expression * instruction (** [IFor (i1, e1, e2, i2, e3, ins)] represents the instruction [for (i1 = e1; e2; i2 = e3) ins]. *)
+  | IFor of identifier * expression * expression * expression * instruction (** [IFor (i1, e1, e2, e3, ins)] represents the instruction [for (i1 = e1; e2; e3) ins]. *)
+  | IExpr of expression (** [IExpr e] represents the instruction [e;]. *)
   | IContinue (** [IContinue] represents the instruction [continue;]. *)
   | ISyso of expression (** [ISyso e] represents the instruction [System.out.println(e);]. *)
   | ISetVar of identifier * expression (** [ISetVar (id, e)] represents the instruction [id = e;]. *)
